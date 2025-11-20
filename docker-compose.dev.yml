@@ -27,11 +27,11 @@ services:
       DATABASE_URL: "postgresql://postgres:DevPassword123@postgres-dev:5432/laundry_os_dev?schema=public"
       JWT_SECRET: "dev-jwt-secret-key-2024"
       JWT_EXPIRES_IN: "7d"
-      PORT: 3001
-      CORS_ORIGIN: "http://localhost:8080"
-      FRONTEND_URL: "http://localhost:8080"
+      PORT: 3002
+      CORS_ORIGIN: "http://localhost:3000"
+      FRONTEND_URL: "http://localhost:3000"
     ports:
-      - "3001:3001"
+      - "3002:3002"
     depends_on:
       - postgres-dev
     volumes:
@@ -56,10 +56,10 @@ services:
       target: builder
     container_name: laundryos-frontend-dev
     environment:
-      VITE_API_URL: "http://localhost:3001/api"
+      VITE_API_URL: "http://localhost:3002/api"
       NODE_ENV: development
     ports:
-      - "8080:5173"
+      - "3000:5173"
     volumes:
       - .:/app
       - /app/node_modules

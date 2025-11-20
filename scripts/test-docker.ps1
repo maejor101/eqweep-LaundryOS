@@ -16,10 +16,10 @@ try {
     Write-Host "Please ensure Docker Desktop is:" -ForegroundColor Yellow
     Write-Host "1. Installed on your system" -ForegroundColor White
     Write-Host "2. Started and running" -ForegroundColor White
-    Write-Host "3. Not in 'Windows containers' mode (use Linux containers)" -ForegroundColor White
+    Write-Host "3. Not in Windows containers mode (use Linux containers)" -ForegroundColor White
     Write-Host ""
     Write-Host "To start Docker Desktop:" -ForegroundColor Yellow
-    Write-Host "- Search for 'Docker Desktop' in Start Menu" -ForegroundColor White
+    Write-Host "- Search for Docker Desktop in Start Menu" -ForegroundColor White
     Write-Host "- Wait for it to fully start (whale icon in system tray)" -ForegroundColor White
     Write-Host "- Then run this script again" -ForegroundColor White
     exit 1
@@ -49,7 +49,7 @@ try {
     Write-Host "✅ Docker is working correctly!" -ForegroundColor Green
 } catch {
     Write-Host "❌ Docker basic test failed!" -ForegroundColor Red
-    Write-Host "Please check Docker Desktop settings and ensure it's fully started" -ForegroundColor Yellow
+    Write-Host "Please check Docker Desktop settings" -ForegroundColor Yellow
     exit 1
 }
 
@@ -57,5 +57,5 @@ Write-Host ""
 Write-Host "🎉 Docker environment is ready!" -ForegroundColor Green
 Write-Host ""
 Write-Host "You can now run:" -ForegroundColor Cyan
-Write-Host "  .\scripts\start-dev.ps1  - Start development environment" -ForegroundColor White
-Write-Host "  .\scripts\start-qa.ps1   - Start QA environment" -ForegroundColor White
+Write-Host "  npm run docker:dev  - Start development environment" -ForegroundColor White
+Write-Host "  npm run docker:qa   - Start QA environment" -ForegroundColor White

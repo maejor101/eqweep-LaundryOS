@@ -1,24 +1,39 @@
 FROM node:18-alpine
 
+# Install system dependencies
+RUN apk add --no-cache git openssl
+
 WORKDIR /app
 
-# Copy package files
+# Create non-root user
+RUN addgroup -g 1001 -S nodejs && \
+    adduser -S nextjs -u 1001
+
+# Copy package files first (better layer caching)
 COPY package*.json ./
-RUN npm ci --only=production
+COPY prisma/schema.prisma ./prisma/
 
-# Install Prisma CLI
-RUN npm install -g prisma
+# Install dependencies with cache mount
+RUN --mount=type=cache,target=/root/.npm \
+    npm ci --prefer-offline && \
+    npm cache clean --force
 
-# Copy source code
-COPY . .
-
-# Generate Prisma client
+# Generate Prisma client (before copying source code)
 RUN npx prisma generate
 
+# Copy source code (separate layer)
+COPY . .
+
 # Build TypeScript
-RUN npm run build
+RUN npm run build && \
+    rm -rf src tsconfig.json
+
+# Set proper permissions
+RUN chown -R nextjs:nodejs /app
+
+USER nextjs
 
 EXPOSE 3001
 
-# Start command
-CMD ["npm", "run", "start"]
+# Use node directly for better performance
+CMD ["node", "dist/server.js"]
