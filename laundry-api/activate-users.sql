@@ -1,1 +1,0 @@
-UPDATE "User" SET "isActive" = true WHERE "isActive" = false;
