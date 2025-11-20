@@ -144,12 +144,68 @@ laundry-api/
 
 ### Prerequisites
 - **Node.js**: Version 18 or higher
-- **PostgreSQL**: Version 18 or higher
+- **PostgreSQL**: Version 18 or higher  
 - **npm**: Version 8 or higher
+- **Docker**: Docker Desktop for containerized development (recommended)
 
-### Installation
+### 🐳 Docker Setup (Recommended)
+
+LaundryOS includes optimized Docker configuration for both development and QA environments with **51% faster build times** and **99.9% smaller build context**.
+
+#### Quick Start with Docker
 
 1. **Clone the repository**:
+   ```bash
+   git clone https://github.com/maejor101/eqweep-LaundryOS.git
+   cd eqweep-LaundryOS
+   ```
+
+2. **Start optimized development environment**:
+   ```bash
+   # Fast build with cache (51% faster than previous setup)
+   docker-compose -f docker-compose.dev.yml up --build -d
+   ```
+
+3. **Access your application**:
+   - **Frontend**: http://localhost:3000
+   - **Backend API**: http://localhost:3002  
+   - **Database**: localhost:5433
+
+#### Performance Features
+- ⚡ **51% faster builds**: 413s → 204s build time
+- 🔥 **99.9% smaller context**: 224MB → 184KB transfer  
+- 🚀 **Cache optimization**: npm cache mounts for lightning rebuilds
+- 🛡️ **Security**: Non-root containers with proper permissions
+- 📦 **Multi-stage builds**: Optimized production images
+
+#### Docker Management Scripts
+```bash
+# Fast optimized build
+.\scripts\fast-build.ps1
+
+# Start development environment  
+.\scripts\start-dev.ps1
+
+# Start QA environment
+.\scripts\start-qa.ps1
+
+# Stop all containers
+.\scripts\stop-all.ps1
+```
+
+#### Environment Configuration
+- **Development**: Port 3000 (frontend), 3002 (backend), 5433 (postgres)
+- **QA**: Port 8081 (frontend), 3004 (backend), 5434 (postgres)
+
+For detailed Docker optimization guide, see [`DOCKER-PERFORMANCE.md`](./DOCKER-PERFORMANCE.md)
+
+---
+
+### 💻 Local Development Setup
+
+If you prefer local development without Docker:
+
+1. **Clone the repository** (if not already done):
    ```bash
    git clone https://github.com/maejor101/eqweep-LaundryOS.git
    cd eqweep-LaundryOS
@@ -196,7 +252,48 @@ laundry-api/
    - Frontend: `http://localhost:8083` (or available port)
    - Backend API: `http://localhost:3001`
 
+---
+
+## 🐳 Docker Environments
+
+### Development Environment
+- **Frontend**: http://localhost:3000
+- **Backend**: http://localhost:3002
+- **Database**: localhost:5433
+- **Features**: Hot reload, development tools, volume mounting
+
+### QA Environment  
+- **Frontend**: http://localhost:8081
+- **Backend**: http://localhost:3004
+- **Database**: localhost:5434
+- **Features**: Production builds, optimized for testing
+
+### Docker Commands
+```bash
+# Build and start development environment
+docker-compose -f docker-compose.dev.yml up --build -d
+
+# Build and start QA environment
+docker-compose -f docker-compose.qa.yml up --build -d
+
+# View running containers
+docker-compose -f docker-compose.dev.yml ps
+
+# View logs
+docker-compose -f docker-compose.dev.yml logs -f
+
+# Stop environment
+docker-compose -f docker-compose.dev.yml down
+```
+
 ### Environment Configuration
+
+#### Docker Environment Files
+The project includes optimized Docker configurations:
+- `docker-compose.dev.yml` - Development with hot reload
+- `docker-compose.qa.yml` - QA environment with production builds  
+- `Dockerfile.frontend` - Optimized React build with cache mounts
+- `laundry-api/Dockerfile` - Optimized Node.js API with security features
 
 #### Backend (.env)
 ```env
@@ -212,6 +309,16 @@ VITE_API_URL="http://localhost:3001/api"
 ```
 
 ### Available Scripts
+
+#### Docker Scripts (PowerShell)
+```bash
+.\scripts\fast-build.ps1    # Optimized build with timing
+.\scripts\start-dev.ps1     # Start development environment  
+.\scripts\start-qa.ps1      # Start QA environment
+.\scripts\stop-all.ps1      # Stop all Docker containers
+.\scripts\reset-dev-db.ps1  # Reset development database
+.\scripts\test-docker.ps1   # Test Docker setup
+```
 
 #### Frontend Scripts
 ```bash
@@ -273,7 +380,20 @@ npm run build    # Build TypeScript to JavaScript
 
 ## 🔧 Configuration
 
-### Database Configuration
+### Docker Configuration  
+```bash
+# Development Environment
+Frontend: http://localhost:3000
+Backend: http://localhost:3002  
+Database: postgresql://postgres:DevPassword123@localhost:5433/laundry_os_dev
+
+# QA Environment
+Frontend: http://localhost:8081
+Backend: http://localhost:3004
+Database: postgresql://postgres:QAPassword123@localhost:5434/laundry_os_qa
+```
+
+### Local Database Configuration
 ```bash
 # PostgreSQL Connection
 Database: laundry_os
@@ -405,6 +525,7 @@ npx prisma studio
 ### Development Environment
 - **Node.js**: 18+ with npm 8+
 - **PostgreSQL**: Local installation or Docker container
+- **Docker**: Docker Desktop (recommended for optimized development)
 - **IDE**: VS Code with recommended extensions:
   - TypeScript and JavaScript Language Features
   - Prisma Extension
