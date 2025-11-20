@@ -1,0 +1,93 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String
+  password  String
+  role      Role     @default(CASHIER)
+  avatar    String?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  lastLogin DateTime?
+  orders    Order[]
+  
+  @@map("users")
+}
+
+model Customer {
+  id            String    @id @default(cuid())
+  name          String
+  phone         String    @unique
+  email         String?
+  address       String?
+  totalOrders   Int       @default(0)
+  createdAt     DateTime  @default(now())
+  lastOrderDate DateTime?
+  orders        Order[]
+  
+  @@map("customers")
+}
+
+model Order {
+  id                 String          @id @default(cuid())
+  orderNumber        String          @unique
+  customerId         String
+  userId             String
+  total              Float
+  paymentMethod      PaymentMethod
+  cashPaymentDetails Json?
+  isExpress          Boolean         @default(false)
+  status             OrderStatus     @default(TODO)
+  stains             String[]
+  createdAt          DateTime        @default(now())
+  completedAt        DateTime?
+  pickedUpAt         DateTime?
+  
+  customer Customer @relation(fields: [customerId], references: [id])
+  user     User     @relation(fields: [userId], references: [id])
+  items    OrderItem[]
+  
+  @@map("orders")
+}
+
+model OrderItem {
+  id       String @id @default(cuid())
+  orderId  String
+  name     String
+  price    Float
+  quantity Int
+  notes    String?
+  
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  
+  @@map("order_items")
+}
+
+enum Role {
+  ADMIN
+  CASHIER
+}
+
+enum PaymentMethod {
+  CASH
+  CARD
+  ON_COLLECTION
+}
+
+enum OrderStatus {
+  TODO
+  WASHERS
+  WAITING
+  DRYERS
+  COMPLETED
+  READY
+  PICKED_UP
+}

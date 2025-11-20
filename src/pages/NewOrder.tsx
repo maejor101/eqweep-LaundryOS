@@ -14,6 +14,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { customerDb, Customer } from "@/lib/customerDatabase";
+import { orderDb } from "@/lib/orderDatabase";
 
 type OrderItem = {
   id: string;
@@ -81,27 +82,27 @@ const PAYMENT_OPTIONS = [
 
 const ITEMS_DATA = {
   "Dry Cleaning": [
-    { id: "dress", name: "Dress", price: 12.0, icon: "👗" },
-    { id: "blazer", name: "Blazer", price: 14.0, icon: "🧥" },
-    { id: "sweater", name: "Sweater", price: 10.0, icon: "🧶" },
-    { id: "shorts", name: "Shorts", price: 8.0, icon: "🩳" },
-    { id: "shirt", name: "Shirt", price: 9.0, icon: "👕" },
-    { id: "dress-red", name: "Dress", price: 12.0, icon: "👗" },
-    { id: "pants", name: "Pants", price: 11.0, icon: "👖" },
-    { id: "gloves", name: "Gloves", price: 6.0, icon: "🧤" },
-    { id: "bowtie", name: "Bow Tie", price: 5.0, icon: "🎀" },
-    { id: "scarf", name: "Scarf", price: 7.0, icon: "🧣" },
-    { id: "jacket", name: "Jacket", price: 15.0, icon: "🧥" },
-    { id: "tshirt", name: "T-Shirt", price: 8.0, icon: "👕" },
-    { id: "dress-pink", name: "Dress", price: 12.0, icon: "👗" },
-    { id: "polo", name: "Polo", price: 9.0, icon: "👔" },
-    { id: "jeans", name: "Jeans", price: 11.0, icon: "👖" },
-    { id: "hat", name: "Hat", price: 6.0, icon: "🎩" },
-    { id: "hoodie", name: "Hoodie", price: 13.0, icon: "🧥" },
-    { id: "suit-jacket", name: "Suit Jacket", price: 16.0, icon: "🧥" },
-    { id: "shirt-green", name: "Shirt", price: 9.0, icon: "👕" },
-    { id: "denim-jacket", name: "Denim Jacket", price: 14.0, icon: "🧥" },
-    { id: "joggers", name: "Joggers", price: 10.0, icon: "👖" },
+    { id: "dress", name: "Dress", price: 220.0, icon: "👗" },
+    { id: "blazer", name: "Blazer", price: 250.0, icon: "🧥" },
+    { id: "sweater", name: "Sweater", price: 180.0, icon: "🧶" },
+    { id: "shorts", name: "Shorts", price: 140.0, icon: "🩳" },
+    { id: "shirt", name: "Shirt", price: 160.0, icon: "👕" },
+    { id: "dress-red", name: "Dress", price: 220.0, icon: "👗" },
+    { id: "pants", name: "Pants", price: 200.0, icon: "👖" },
+    { id: "gloves", name: "Gloves", price: 110.0, icon: "🧤" },
+    { id: "bowtie", name: "Bow Tie", price: 90.0, icon: "🎀" },
+    { id: "scarf", name: "Scarf", price: 120.0, icon: "🧣" },
+    { id: "jacket", name: "Jacket", price: 270.0, icon: "🧥" },
+    { id: "tshirt", name: "T-Shirt", price: 140.0, icon: "👕" },
+    { id: "dress-pink", name: "Dress", price: 220.0, icon: "👗" },
+    { id: "polo", name: "Polo", price: 160.0, icon: "👔" },
+    { id: "jeans", name: "Jeans", price: 200.0, icon: "👖" },
+    { id: "hat", name: "Hat", price: 110.0, icon: "🎩" },
+    { id: "hoodie", name: "Hoodie", price: 230.0, icon: "🧥" },
+    { id: "suit-jacket", name: "Suit Jacket", price: 290.0, icon: "🧥" },
+    { id: "shirt-green", name: "Shirt", price: 160.0, icon: "👕" },
+    { id: "denim-jacket", name: "Denim Jacket", price: 250.0, icon: "🧥" },
+    { id: "joggers", name: "Joggers", price: 180.0, icon: "👖" },
   ],
 };
 
@@ -144,15 +145,13 @@ const COLORS = [
 
 const NewOrder = () => {
   const [activeCategory, setActiveCategory] = useState<ServiceCategory>("Dry Cleaning");
-  const [orderItems, setOrderItems] = useState<OrderItem[]>([
-    { id: "blazer", name: "Blazer", price: 14.0, quantity: 1 },
-    { id: "shirt", name: "Oxford Shirt", price: 12.0, quantity: 2, notes: "Collar Torn/Mud" },
-  ]);
+  const [orderItems, setOrderItems] = useState<OrderItem[]>([]);
   const [isExpress, setIsExpress] = useState(false);
-  const [selectedStains, setSelectedStains] = useState<string[]>(["Button Broken"]);
+  const [selectedStains, setSelectedStains] = useState<string[]>([]);
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<PaymentMethod | null>(null);
   const [showPaymentError, setShowPaymentError] = useState(false);
   const [showCashModal, setShowCashModal] = useState(false);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [showCustomerModal, setShowCustomerModal] = useState(false);
   const [customerDetails, setCustomerDetails] = useState<CustomerDetails>({
     name: '',
@@ -258,10 +257,10 @@ const NewOrder = () => {
       return false;
     }
     return true;
-  };  const handleCustomerSubmit = () => {
+  };  const handleCustomerSubmit = async () => {
     if (validateCustomerDetails()) {
       // Save customer to database
-      const customer = customerDb.saveCustomer(customerDetails);
+      const customer = await customerDb.saveCustomer(customerDetails);
       setSelectedCustomer(customer);
       setCustomerValidated(true);
       setShowCustomerModal(false);
@@ -270,10 +269,10 @@ const NewOrder = () => {
     }
   };
 
-  const handleCustomerSearch = (query: string) => {
+  const handleCustomerSearch = async (query: string) => {
     setCustomerSearchQuery(query);
     if (query.trim()) {
-      const results = customerDb.searchCustomers(query);
+      const results = await customerDb.searchCustomers(query);
       setSearchResults(results);
     } else {
       setSearchResults([]);
@@ -345,7 +344,7 @@ const NewOrder = () => {
     toast.success(`Cash payment confirmed. Change: R${cashPayment.change.toFixed(2)}`);
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     // Validate customer details are captured
     if (!customerValidated) {
       setShowCustomerModal(true);
@@ -372,46 +371,70 @@ const NewOrder = () => {
 
     setShowPaymentError(false);
 
-    const order = {
-      id: `#${Math.floor(Math.random() * 1000)}`,
-      customer: customerDetails,
-      items: orderItems,
-      total: calculateTotal(),
-      paymentMethod: selectedPaymentMethod,
-      cashPaymentDetails: selectedPaymentMethod === 'cash' ? cashPayment : undefined,
-      isExpress,
-      status: "To-Do",
-      createdAt: new Date().toISOString(),
+    // Create order using order database
+    const orderData = {
+      orderNumber: orderDb.generateOrderNumber(),
+      customerName: customerDetails.name,
+      customerPhone: customerDetails.phone,
+      items: orderItems.map(item => ({
+        id: item.id,
+        name: item.name,
+        price: item.price,
+        quantity: item.quantity,
+        notes: item.notes
+      })),
+      totalAmount: calculateTotal(),
+      paymentMethod: selectedPaymentMethod as 'cash' | 'card' | 'on_collection',
+      paymentStatus: selectedPaymentMethod === 'on_collection' ? 'pending' as const : 'paid' as const,
+      status: 'new' as const,
+      notes: `Express: ${isExpress}${selectedPaymentMethod === 'cash' ? `, Change: R${cashPayment.change.toFixed(2)}` : ''}`,
+      estimatedCompletion: new Date(Date.now() + (isExpress ? 2 * 60 * 60 * 1000 : 24 * 60 * 60 * 1000)).toISOString(),
+      customerId: selectedCustomer?.id
     };
 
-    // Store in localStorage for now
-    const existingOrders = JSON.parse(localStorage.getItem("orders") || "[]");
-    localStorage.setItem("orders", JSON.stringify([...existingOrders, order]));
+    try {
+      console.log('Creating order with data:', orderData);
+      const order = await orderDb.createOrder(orderData);
+      console.log('Order created successfully:', order);
+      
+      if (!order) {
+        throw new Error('Order creation returned null/undefined');
+      }
+      
+      // Update customer order statistics (optional, don't fail if it errors)
+      if (selectedCustomer) {
+        try {
+          await customerDb.updateCustomerOrderStats(selectedCustomer.phone);
+        } catch (statsError) {
+          console.warn('Failed to update customer stats, but order was created:', statsError);
+        }
+      }
+      
+      const paymentMethodName = PAYMENT_OPTIONS.find(p => p.id === selectedPaymentMethod)?.name;
+      const orderNumber = order.orderNumber || 'N/A';
+      let description = `Order ${orderNumber} - R${order.totalAmount.toFixed(2)} (${paymentMethodName})`;
+      
+      if (selectedPaymentMethod === 'cash') {
+        description += ` | Change: R${cashPayment.change.toFixed(2)}`;
+      }
 
-    // Update customer order statistics
-    if (selectedCustomer) {
-      customerDb.updateCustomerOrderStats(selectedCustomer.phone);
+      toast.success(`Order created for ${customerDetails.name}!`, {
+        description: description,
+      });
+
+      // Reset form
+      setOrderItems([]);
+      setSelectedStains([]);
+      setIsExpress(false);
+      setSelectedPaymentMethod(null);
+      setShowPaymentError(false);
+      resetCashPayment();
+      resetCustomerDetails();
+      
+    } catch (error) {
+      console.error('Error creating order:', error);
+      toast.error(`Failed to create order: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
-
-    const paymentMethodName = PAYMENT_OPTIONS.find(p => p.id === selectedPaymentMethod)?.name;
-    let description = `Order ${order.id} - R${order.total.toFixed(2)} (${paymentMethodName})`;
-    
-    if (selectedPaymentMethod === 'cash') {
-      description += ` | Change: R${cashPayment.change.toFixed(2)}`;
-    }
-
-    toast.success(`Order created for ${customerDetails.name}!`, {
-      description: description,
-    });
-
-    // Reset form
-    setOrderItems([]);
-    setSelectedStains([]);
-    setIsExpress(false);
-    setSelectedPaymentMethod(null);
-    setShowPaymentError(false);
-    resetCashPayment();
-    resetCustomerDetails();
   };
 
   return (
@@ -511,7 +534,7 @@ const NewOrder = () => {
       {/* Right Panel - Order Summary */}
       <div className="w-96 bg-card border-l border-border flex flex-col">
         <div className="p-6 flex-1 overflow-auto">
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center justify-between mb-4">
             <Button variant="ghost" size="icon" className="rounded-full">
               <Plus className="h-5 w-5" />
             </Button>
@@ -521,41 +544,56 @@ const NewOrder = () => {
             </div>
           </div>
 
+          {/* Cart Total Display */}
+          <div className="mb-4 p-3 bg-primary/5 border border-primary/20 rounded-lg">
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-medium text-foreground">Order Total</span>
+              <span className="text-lg font-bold text-primary">R{calculateTotal().toFixed(2)}</span>
+            </div>
+            {orderItems.length > 0 && (
+              <div className="text-xs text-muted-foreground mt-1">
+                {orderItems.length} item{orderItems.length !== 1 ? 's' : ''} • 
+                {isExpress && <span className="text-orange-600 ml-1">Express Service</span>}
+                {!isExpress && <span className="ml-1">Standard Service</span>}
+              </div>
+            )}
+          </div>
+
           {orderItems.length === 0 ? (
             <div className="text-center text-muted-foreground py-12">
               <p>No items added yet</p>
               <p className="text-sm mt-2">Select items from the grid to add them to your order</p>
             </div>
           ) : (
-            <div className="space-y-3">
+            <div className="space-y-2">
               {orderItems.map((item) => (
-                <div key={item.id} className="bg-secondary rounded-lg p-4">
+                <div key={item.id} className="bg-secondary rounded-md p-3">
                   <div className="flex items-start justify-between mb-2">
                     <div>
-                      <h4 className="font-semibold">{item.name}</h4>
-                      {item.notes && <p className="text-sm text-muted-foreground">{item.notes}</p>}
+                      <h4 className="font-semibold text-sm">{item.name}</h4>
+                      {item.notes && <p className="text-xs text-muted-foreground">{item.notes}</p>}
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 text-sm">
                       <span className="font-semibold">{item.quantity}</span>
-                      <span className="text-muted-foreground">${item.price.toFixed(2)}</span>
+                      <span className="text-muted-foreground">R{item.price.toFixed(2)}</span>
                     </div>
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex gap-1">
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={() => updateQuantity(item.id, -1)}
-                      className="h-8 w-8 p-0"
+                      className="h-6 w-6 p-0"
                     >
-                      <Minus className="h-4 w-4" />
+                      <Minus className="h-3 w-3" />
                     </Button>
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={() => updateQuantity(item.id, 1)}
-                      className="h-8 w-8 p-0"
+                      className="h-6 w-6 p-0"
                     >
-                      <Plus className="h-4 w-4" />
+                      <Plus className="h-3 w-3" />
                     </Button>
                   </div>
                 </div>
@@ -579,10 +617,11 @@ const NewOrder = () => {
                     <Button 
                       variant="link" 
                       className="h-auto p-0 text-primary text-xs"
-                      onClick={() => {
+                      onClick={async () => {
                         setShowCustomerSearch(true);
                         // Load all customers for initial display
-                        setSearchResults(customerDb.getAllCustomers().slice(0, 5));
+                        const allCustomers = await customerDb.getAllCustomers();
+                        setSearchResults(allCustomers.slice(0, 5));
                       }}
                     >
                       Click to search or add customer
@@ -621,66 +660,45 @@ const NewOrder = () => {
             )}
           </div>
 
-          {/* Payment Method Selection */}
-          <div className="space-y-3">
-            <h3 className="text-sm font-medium text-foreground">Payment Method</h3>
+          {/* Payment Method Button */}
+          <div className="space-y-2">
+            <Button
+              variant={selectedPaymentMethod ? "default" : "outline"}
+              className="w-full justify-between h-12"
+              onClick={() => setShowPaymentModal(true)}
+              disabled={!customerValidated}
+            >
+              <div className="flex items-center gap-2">
+                {selectedPaymentMethod ? (
+                  <>
+                    {(() => {
+                      const option = PAYMENT_OPTIONS.find(opt => opt.id === selectedPaymentMethod);
+                      const Icon = option?.icon || CreditCard;
+                      return <Icon className="h-4 w-4" />;
+                    })()}
+                    <span>{PAYMENT_OPTIONS.find(opt => opt.id === selectedPaymentMethod)?.name || 'Select Payment'}</span>
+                  </>
+                ) : (
+                  <>
+                    <CreditCard className="h-4 w-4" />
+                    <span>Select Payment Method</span>
+                  </>
+                )}
+              </div>
+              {selectedPaymentMethod === 'cash' && cashPayment.totalPaid > 0 && (
+                <span className="text-xs opacity-80">
+                  R{cashPayment.totalPaid.toFixed(2)}
+                </span>
+              )}
+            </Button>
             
             {showPaymentError && (
-              <Alert variant="destructive">
-                <AlertDescription>
-                  Please select a payment method to proceed with your order.
+              <Alert variant="destructive" className="py-2">
+                <AlertDescription className="text-xs">
+                  Please select a payment method to proceed.
                 </AlertDescription>
               </Alert>
             )}
-
-            <div className="grid grid-cols-1 gap-2">
-              {PAYMENT_OPTIONS.map((option) => {
-                const Icon = option.icon;
-                const isSelected = selectedPaymentMethod === option.id;
-                
-                return (
-                  <button
-                    key={option.id}
-                    onClick={() => handlePaymentMethodSelect(option.id)}
-                    disabled={!customerValidated}
-                    className={`
-                      w-full p-3 rounded-lg border-2 transition-all text-left
-                      ${!customerValidated 
-                        ? 'border-muted bg-muted/30 cursor-not-allowed opacity-50' 
-                        : isSelected 
-                        ? 'border-primary bg-primary/5 ring-2 ring-primary/20' 
-                        : 'border-border hover:border-primary/50 hover:bg-accent/50'
-                      }
-                    `}
-                  >
-                    <div className="flex items-center gap-3">
-                      <Icon className={`h-5 w-5 ${isSelected ? 'text-primary' : option.color}`} />
-                      <div className="flex-1">
-                        <p className={`font-medium ${isSelected ? 'text-primary' : 'text-foreground'}`}>
-                          {option.name}
-                          {option.id === 'cash' && selectedPaymentMethod === 'cash' && cashPayment.totalPaid > 0 && (
-                            <span className="text-xs text-muted-foreground ml-2">
-                              (R{cashPayment.totalPaid.toFixed(2)})
-                            </span>
-                          )}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {option.description}
-                          {option.id === 'cash' && selectedPaymentMethod === 'cash' && cashPayment.change > 0 && (
-                            <span className="text-green-600 ml-2">
-                              Change: R{cashPayment.change.toFixed(2)}
-                            </span>
-                          )}
-                        </p>
-                      </div>
-                      {isSelected && (
-                        <div className="h-2 w-2 rounded-full bg-primary" />
-                      )}
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
           </div>
 
           <div className="flex justify-between text-sm">
@@ -1001,6 +1019,67 @@ const NewOrder = () => {
                 }
               </Button>
             </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Payment Method Selection Modal */}
+      <Dialog open={showPaymentModal} onOpenChange={setShowPaymentModal}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Select Payment Method</DialogTitle>
+            <DialogDescription>
+              Choose how the customer will pay for this order.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-3">
+            {PAYMENT_OPTIONS.map((option) => {
+              const Icon = option.icon;
+              const isSelected = selectedPaymentMethod === option.id;
+              
+              return (
+                <button
+                  key={option.id}
+                  onClick={() => {
+                    handlePaymentMethodSelect(option.id);
+                    setShowPaymentModal(false);
+                  }}
+                  className={`
+                    w-full p-4 rounded-lg border-2 transition-all text-left
+                    ${isSelected 
+                      ? 'border-primary bg-primary/5 ring-2 ring-primary/20' 
+                      : 'border-border hover:border-primary/50 hover:bg-accent/50'
+                    }
+                  `}
+                >
+                  <div className="flex items-center gap-3">
+                    <Icon className={`h-5 w-5 ${isSelected ? 'text-primary' : option.color}`} />
+                    <div className="flex-1">
+                      <p className={`font-medium ${isSelected ? 'text-primary' : 'text-foreground'}`}>
+                        {option.name}
+                        {option.id === 'cash' && selectedPaymentMethod === 'cash' && cashPayment.totalPaid > 0 && (
+                          <span className="text-sm text-muted-foreground ml-2">
+                            (R{cashPayment.totalPaid.toFixed(2)})
+                          </span>
+                        )}
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        {option.description}
+                        {option.id === 'cash' && selectedPaymentMethod === 'cash' && cashPayment.change > 0 && (
+                          <span className="text-green-600 ml-2">
+                            Change: R{cashPayment.change.toFixed(2)}
+                          </span>
+                        )}
+                      </p>
+                    </div>
+                    {isSelected && (
+                      <div className="h-2 w-2 rounded-full bg-primary" />
+                    )}
+                  </div>
+                </button>
+              );
+            })}
           </div>
         </DialogContent>
       </Dialog>

@@ -1,4 +1,6 @@
-interface Customer {
+import { apiClient } from './api';
+
+export interface Customer {
   id: string;
   name: string;
   phone: string;
@@ -10,11 +12,99 @@ interface Customer {
 }
 
 class CustomerDatabase {
-  private storageKey = 'laundromat-customers';
+  async getAllCustomers(): Promise<Customer[]> {
+    try {
+      const customers = await apiClient.getCustomers();
+      return customers.map((customer: any) => ({
+        ...customer,
+        createdAt: new Date(customer.createdAt),
+        lastOrderDate: customer.lastOrderDate ? new Date(customer.lastOrderDate) : undefined
+      }));
+    } catch (error) {
+      console.error('Error fetching customers:', error);
+      // Fallback to localStorage for development/offline mode
+      return this.getLocalStorageCustomers();
+    }
+  }
 
-  // Get all customers
-  getAllCustomers(): Customer[] {
-    const stored = localStorage.getItem(this.storageKey);
+  async searchCustomers(query: string): Promise<Customer[]> {
+    try {
+      const customers = await apiClient.getCustomers(query);
+      return customers.map((customer: any) => ({
+        ...customer,
+        createdAt: new Date(customer.createdAt),
+        lastOrderDate: customer.lastOrderDate ? new Date(customer.lastOrderDate) : undefined
+      }));
+    } catch (error) {
+      console.error('Error searching customers:', error);
+      // Fallback to localStorage search
+      const localCustomers = this.getLocalStorageCustomers();
+      const searchTerm = query.toLowerCase().trim();
+      
+      if (!searchTerm) return localCustomers;
+      
+      return localCustomers.filter(customer => 
+        customer.name.toLowerCase().includes(searchTerm) ||
+        customer.phone.includes(searchTerm)
+      );
+    }
+  }
+
+  async saveCustomer(customerData: { 
+    name: string; 
+    phone: string; 
+    email?: string; 
+    address?: string 
+  }): Promise<Customer> {
+    try {
+      const customer = await apiClient.saveCustomer(customerData);
+      return {
+        ...customer,
+        createdAt: new Date(customer.createdAt),
+        lastOrderDate: customer.lastOrderDate ? new Date(customer.lastOrderDate) : undefined
+      };
+    } catch (error) {
+      console.error('Error saving customer:', error);
+      // Fallback to localStorage
+      return this.saveToLocalStorage(customerData);
+    }
+  }
+
+  async findByPhone(phone: string): Promise<Customer | undefined> {
+    try {
+      const customers = await this.searchCustomers(phone);
+      return customers.find(c => c.phone === phone);
+    } catch (error) {
+      console.error('Error finding customer by phone:', error);
+      return undefined;
+    }
+  }
+
+  async getCustomerById(id: string): Promise<Customer | undefined> {
+    try {
+      const customer = await apiClient.getCustomer(id);
+      return {
+        ...customer,
+        createdAt: new Date(customer.createdAt),
+        lastOrderDate: customer.lastOrderDate ? new Date(customer.lastOrderDate) : undefined
+      };
+    } catch (error) {
+      console.error('Error fetching customer by ID:', error);
+      return undefined;
+    }
+  }
+
+  async updateCustomerOrderStats(customerId: string): Promise<void> {
+    try {
+      await apiClient.updateCustomer(customerId, {}); // This will trigger stats update on backend
+    } catch (error) {
+      console.error('Error updating customer order stats:', error);
+    }
+  }
+
+  // Fallback localStorage methods for development/offline mode
+  private getLocalStorageCustomers(): Customer[] {
+    const stored = localStorage.getItem('laundromat-customers');
     if (!stored) return [];
     
     try {
@@ -28,33 +118,13 @@ class CustomerDatabase {
     }
   }
 
-  // Save customers to localStorage
-  private saveCustomers(customers: Customer[]): void {
-    localStorage.setItem(this.storageKey, JSON.stringify(customers));
-  }
-
-  // Search customers by name or phone
-  searchCustomers(query: string): Customer[] {
-    const customers = this.getAllCustomers();
-    const searchTerm = query.toLowerCase().trim();
-    
-    if (!searchTerm) return customers;
-    
-    return customers.filter(customer => 
-      customer.name.toLowerCase().includes(searchTerm) ||
-      customer.phone.includes(searchTerm)
-    );
-  }
-
-  // Find customer by exact phone number
-  findByPhone(phone: string): Customer | undefined {
-    const customers = this.getAllCustomers();
-    return customers.find(customer => customer.phone === phone);
-  }
-
-  // Add or update customer
-  saveCustomer(customerData: { name: string; phone: string; email?: string; address?: string }): Customer {
-    const customers = this.getAllCustomers();
+  private saveToLocalStorage(customerData: { 
+    name: string; 
+    phone: string; 
+    email?: string; 
+    address?: string 
+  }): Customer {
+    const customers = this.getLocalStorageCustomers();
     const existingIndex = customers.findIndex(c => c.phone === customerData.phone);
     
     if (existingIndex >= 0) {
@@ -65,7 +135,7 @@ class CustomerDatabase {
         email: customerData.email,
         address: customerData.address
       };
-      this.saveCustomers(customers);
+      localStorage.setItem('laundromat-customers', JSON.stringify(customers));
       return customers[existingIndex];
     } else {
       // Create new customer
@@ -79,41 +149,10 @@ class CustomerDatabase {
         totalOrders: 0
       };
       customers.push(newCustomer);
-      this.saveCustomers(customers);
+      localStorage.setItem('laundromat-customers', JSON.stringify(customers));
       return newCustomer;
     }
-  }
-
-  // Update customer order statistics
-  updateCustomerOrderStats(phone: string): void {
-    const customers = this.getAllCustomers();
-    const customerIndex = customers.findIndex(c => c.phone === phone);
-    
-    if (customerIndex >= 0) {
-      customers[customerIndex].totalOrders += 1;
-      customers[customerIndex].lastOrderDate = new Date();
-      this.saveCustomers(customers);
-    }
-  }
-
-  // Get customer by ID
-  getCustomerById(id: string): Customer | undefined {
-    const customers = this.getAllCustomers();
-    return customers.find(c => c.id === id);
-  }
-
-  // Delete customer (for admin purposes)
-  deleteCustomer(id: string): boolean {
-    const customers = this.getAllCustomers();
-    const filtered = customers.filter(c => c.id !== id);
-    
-    if (filtered.length !== customers.length) {
-      this.saveCustomers(filtered);
-      return true;
-    }
-    return false;
   }
 }
 
 export const customerDb = new CustomerDatabase();
-export type { Customer };

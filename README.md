@@ -1,30 +1,33 @@
 # LaundryOS 🧺
 
-A modern, comprehensive laundry and dry cleaning management system built with React and TypeScript. LaundryOS provides complete business management features including role-based authentication, customer management, order processing, and South African payment integration.
+A modern, comprehensive laundry and dry cleaning management system built with React, TypeScript, and PostgreSQL. LaundryOS provides complete business management features including role-based authentication, customer management, order processing workflow, and South African Rand (ZAR) payment integration.
 
 ## 🌟 Features
 
 ### 👥 Authentication & User Management
 - **Role-based Access Control**: Admin and Cashier roles with different permissions
+- **Secure Authentication**: JWT-based authentication with PostgreSQL user storage
 - **User Registration/Login**: Secure authentication with form validation
 - **Profile Management**: Users can update personal information
 - **Admin Dashboard**: Complete user management for administrators
 
-### 🛍️ Order Management
+### 🛍️ Complete Order Processing Workflow
 - **Service Categories**: Dry Cleaning, Laundry, Shoe Repairs, Alterations
-- **Item Catalog**: Pre-configured items with pricing (Dresses, Blazers, Shirts, etc.)
-- **Express Service**: Option for priority processing
+- **Item Catalog**: Pre-configured items with ZAR pricing (R90-R290 range)
+- **Express Service**: Option for priority processing with additional fees
 - **Stain Tracking**: Document specific stains and damage (Mud, Coffee, Wine, etc.)
-- **Order Status**: Track orders through To-Do, Process, Ready, Pickups phases
+- **Full Workflow**: Orders progress through To-Do → Washers → Waiting → Dryers → Ready → Pickup
+- **Status Management**: Real-time order status updates with database persistence
 
 ### 👨‍👩‍👧‍👦 Customer Management
-- **Customer Database**: Persistent customer storage with order history
+- **PostgreSQL Database**: Persistent customer storage with full order history
 - **Smart Search**: Find existing customers by name or phone number
-- **Customer Profiles**: Store name, phone, email, and address (optional)
-- **Order History**: Track total orders and last order date per customer
+- **Customer Profiles**: Store name, phone, email, and address
+- **Order History**: Complete tracking of customer order history
 - **Duplicate Prevention**: Automatic customer deduplication by phone number
 
-### 💳 Payment System (South African Currency)
+### 💳 South African Payment System
+- **Currency**: All pricing in South African Rand (ZAR)
 - **Multiple Payment Methods**: Cash, Card, On Collection
 - **Cash Payment Interface**: 
   - **Notes**: R10, R20, R50, R100, R200
@@ -32,123 +35,117 @@ A modern, comprehensive laundry and dry cleaning management system built with Re
   - **Change Calculator**: Automatic change calculation
 - **Payment Validation**: Ensure sufficient payment before order completion
 
-### 🎨 User Interface
-- **Modern Design**: Built with shadcn/ui components and Tailwind CSS
-- **Responsive Layout**: Works on desktop and mobile devices
-- **Dark/Light Theme**: Automatic theme support
-- **Professional Icons**: Lucide React icon library
-- **Toast Notifications**: Real-time feedback with Sonner
+### 🎨 Modern User Interface
+- **Professional Design**: Built with shadcn/ui components and Tailwind CSS
+- **Responsive Layout**: Optimized for desktop and mobile devices
+- **Clean Navigation**: Role-based navigation with LaundryOS branding
+- **Real-time Updates**: Live order status updates and notifications
+- **Optimized Cart**: Compact payment selection with expanded cart space
 
-## 🏗️ Architecture
+## 🏗️ System Architecture
 
 ### Tech Stack
-- **Frontend Framework**: React 18.3.x with TypeScript
-- **Build Tool**: Vite 5.4.x for fast development and building
+- **Frontend**: React 18.3.x with TypeScript and Vite 5.4.x
+- **Backend**: Node.js with Express.js RESTful API
+- **Database**: PostgreSQL 18 with Prisma ORM
+- **Authentication**: JWT tokens with bcrypt password hashing
 - **Styling**: Tailwind CSS with shadcn/ui component library
-- **Routing**: React Router DOM v6 for navigation
-- **State Management**: React Context API for authentication
+- **State Management**: React Context API with API integration
 - **Forms**: React Hook Form with Zod validation
-- **Data Storage**: Browser localStorage (client-side persistence)
-- **Icons**: Lucide React for consistent iconography
+
+### Database Schema
+```sql
+-- Users table for authentication
+Users (id, email, name, password, role, isActive, createdAt, lastLogin)
+
+-- Customers table for customer management  
+Customers (id, name, phone, email, address, totalOrders, createdAt, lastOrderDate)
+
+-- Orders table for order tracking
+Orders (id, orderNumber, customerId, userId, total, paymentMethod, status, createdAt, updatedAt)
+
+-- Order items for detailed item tracking
+OrderItems (id, orderId, name, price, quantity, notes)
+```
+
+### API Endpoints
+```
+Authentication:
+POST /api/auth/login    - User login
+POST /api/auth/register - User registration
+GET  /api/auth/profile  - Get user profile
+
+Customers:
+GET    /api/customers        - List customers
+POST   /api/customers        - Create customer
+GET    /api/customers/:id    - Get customer details
+PATCH  /api/customers/:id    - Update customer
+
+Orders:
+GET    /api/orders           - List orders
+POST   /api/orders           - Create order
+GET    /api/orders/:id       - Get order details
+PATCH  /api/orders/:id/status - Update order status
+PATCH  /api/orders/:id       - Update order details
+
+Users (Admin only):
+GET    /api/users            - List users
+POST   /api/users            - Create user
+PATCH  /api/users/:id        - Update user
+DELETE /api/users/:id        - Delete user
+```
 
 ### Project Structure
 ```
+├── Frontend (React/TypeScript)
 src/
 ├── components/           # Reusable UI components
 │   ├── ui/              # shadcn/ui base components
-│   ├── Header.tsx       # Navigation header with role-based menus
-│   ├── NavLink.tsx      # Custom navigation links
-│   ├── ProtectedRoute.tsx # Route protection wrapper
-│   └── RoleGuard.tsx    # Role-based access control components
+│   ├── Header.tsx       # Navigation with LaundryOS branding
+│   └── NavLink.tsx      # Custom navigation links
 ├── contexts/
-│   └── AuthContext.tsx  # Authentication state management
+│   └── AuthContext.tsx  # JWT authentication state management
 ├── hooks/
 │   ├── use-mobile.tsx   # Mobile device detection
 │   └── use-toast.ts     # Toast notification hook
 ├── lib/
-│   ├── utils.ts         # Utility functions and classname helpers
-│   └── customerDatabase.ts # Customer data management
+│   ├── utils.ts         # Utility functions
+│   ├── api.ts          # API client with authentication
+│   ├── customerDatabase.ts # Customer data management
+│   └── orderDatabase.ts    # Order data management
 ├── pages/               # Application screens
-│   ├── Login.tsx        # User authentication
-│   ├── Register.tsx     # User registration
-│   ├── Profile.tsx      # User profile management
-│   ├── AdminSettings.tsx # Admin user management
+│   ├── Index.tsx        # Dashboard/landing page
 │   ├── NewOrder.tsx     # Order creation interface
-│   ├── Process.tsx      # Order processing view
+│   ├── Process.tsx      # Complete order workflow management
 │   ├── Ready.tsx        # Ready orders view
 │   ├── Pickups.tsx      # Order pickup management
 │   └── NotFound.tsx     # 404 error page
 ├── App.tsx              # Main application component
-├── main.tsx            # Application entry point
-└── index.css           # Global styles and CSS variables
-```
+└── main.tsx            # Application entry point
 
-### Core Components
-
-#### Authentication System (`AuthContext.tsx`)
-- **User Interface**: Defines user structure with roles and metadata
-- **Authentication Functions**: Login, register, logout, profile updates
-- **Role Checking**: Admin/cashier permission validation
-- **Persistent Sessions**: localStorage-based session management
-
-#### Customer Management (`customerDatabase.ts`)
-- **Customer Class**: Complete customer data model
-- **Search Functionality**: Name and phone number search
-- **Order Tracking**: Statistics and history per customer
-- **Data Persistence**: Browser localStorage integration
-
-#### Order Processing (`NewOrder.tsx`)
-- **Service Selection**: Category-based item selection
-- **Customer Integration**: Search existing or add new customers
-- **Payment Processing**: Multi-method payment with cash handling
-- **Validation**: Complete order validation before submission
-
-### Data Models
-
-#### User Interface
-```typescript
-interface User {
-  id: string;
-  email: string;
-  name: string;
-  role: 'admin' | 'cashier';
-  avatar?: string;
-  createdAt: string;
-  lastLogin?: string;
-  isActive: boolean;
-}
-```
-
-#### Customer Interface
-```typescript
-interface Customer {
-  id: string;
-  name: string;
-  phone: string;
-  email?: string;
-  address?: string;
-  createdAt: Date;
-  totalOrders: number;
-  lastOrderDate?: Date;
-}
-```
-
-#### Order Interface
-```typescript
-interface OrderItem {
-  id: string;
-  name: string;
-  price: number;
-  quantity: number;
-  notes?: string;
-}
+├── Backend API (Node.js/Express)
+laundry-api/
+├── src/
+│   ├── server.ts        # Express server setup
+│   ├── routes/          # API route handlers
+│   │   ├── auth.ts      # Authentication routes
+│   │   ├── users.ts     # User management
+│   │   ├── customers.ts # Customer management
+│   │   └── orders.ts    # Order management
+│   └── middleware/
+│       └── auth.ts      # JWT authentication middleware
+├── prisma/
+│   ├── schema.prisma    # Database schema
+│   └── migrations/      # Database migrations
+└── package.json         # Backend dependencies
 ```
 
 ## 🚀 Getting Started
 
 ### Prerequisites
 - **Node.js**: Version 18 or higher
-- **npm**: Version 8 or higher (comes with Node.js)
+- **PostgreSQL**: Version 18 or higher
+- **npm**: Version 8 or higher
 
 ### Installation
 
@@ -158,129 +155,224 @@ interface OrderItem {
    cd eqweep-LaundryOS
    ```
 
-2. **Install dependencies**:
+2. **Setup PostgreSQL Database**:
    ```bash
-   npm install
+   # Install PostgreSQL 18 and create database
+   createdb laundry_os
+   
+   # Set up database user (optional)
+   createuser -P postgres  # Use password: Admin
    ```
 
-3. **Start development server**:
+3. **Setup Backend API**:
    ```bash
+   cd laundry-api
+   npm install
+   
+   # Configure database connection
+   cp .env.example .env
+   # Edit .env with your PostgreSQL connection details:
+   # DATABASE_URL="postgresql://postgres:Admin@localhost:5432/laundry_os"
+   # JWT_SECRET="your-secret-key"
+   
+   # Run database migrations
+   npx prisma migrate deploy
+   npx prisma generate
+   
+   # Start backend server
+   npm start
+   ```
+
+4. **Setup Frontend**:
+   ```bash
+   cd ..  # Back to root directory
+   npm install
+   
+   # Start frontend development server
    npm run dev
    ```
 
-4. **Open in browser**:
-   Navigate to `http://localhost:5173` (or the port shown in terminal)
+5. **Access the application**:
+   - Frontend: `http://localhost:8083` (or available port)
+   - Backend API: `http://localhost:3001`
+
+### Environment Configuration
+
+#### Backend (.env)
+```env
+DATABASE_URL="postgresql://postgres:Admin@localhost:5432/laundry_os"
+JWT_SECRET="your-secure-jwt-secret-key"
+PORT=3001
+NODE_ENV=development
+```
+
+#### Frontend (Environment Variables)
+```env
+VITE_API_URL="http://localhost:3001/api"
+```
 
 ### Available Scripts
 
+#### Frontend Scripts
 ```bash
-# Development server with hot reload
-npm run dev
+npm run dev      # Development server with hot reload
+npm run build    # Build for production
+npm run preview  # Preview production build
+npm run lint     # Run ESLint for code quality
+```
 
-# Build for production
-npm run build
-
-# Build for development (with source maps)
-npm run build:dev
-
-# Preview production build
-npm run preview
-
-# Run ESLint for code quality
-npm run lint
+#### Backend Scripts
+```bash
+npm start        # Start production server
+npm run dev      # Development server with auto-reload
+npm run build    # Build TypeScript to JavaScript
 ```
 
 ## 📱 Usage Guide
 
 ### Initial Setup
-1. **First Run**: Navigate to the registration page
-2. **Create Admin**: Register the first user as an admin
-3. **Add Staff**: Admins can add cashier accounts through Admin Settings
+1. **Database Setup**: Ensure PostgreSQL is running with the laundry_os database
+2. **First User**: Register the first user (automatically becomes admin)
+3. **Staff Management**: Admins can manage users through the system
 
 ### Daily Operations
 
-#### For Cashiers
-1. **Login**: Use cashier credentials to access the system
-2. **Create Orders**: 
-   - Search for existing customers or add new ones
-   - Select service items and quantities
-   - Choose payment method
-   - Process payment (especially cash with change calculation)
-3. **Manage Orders**: Track orders through different stages
+#### Order Processing Workflow
+1. **Create Order** (New Order Page):
+   - Search for existing customer or add new customer
+   - Select service items with South African Rand pricing
+   - Choose payment method (Cash/Card/On Collection)
+   - Submit order (automatically starts in "To-Do" status)
 
-#### For Administrators
-- **All Cashier Features**: Full access to order management
-- **User Management**: Add, edit, and deactivate staff accounts
-- **System Administration**: Access to all system features
+2. **Process Orders** (Process Page):
+   - **To-Do**: Newly created orders
+   - **Washers**: Orders being washed
+   - **Waiting**: Orders waiting for next step
+   - **Dryers**: Orders being dried
+   - **Ready**: Orders ready for pickup
+   - **Pickup**: Completed orders
 
-### Customer Management Workflow
+3. **Order Management**:
+   - Move orders between stages with status update buttons
+   - Real-time order tracking with automatic refresh
+   - Database persistence ensures no data loss
+
+#### Customer Management Workflow
 1. **Search Customer**: Type name or phone number in search
-2. **Select Existing**: Choose from search results with order history
-3. **Add New Customer**: Create new profile if customer not found
-4. **Order Processing**: Customer automatically linked to order
+2. **View History**: See complete customer order history from database
+3. **Add New Customer**: Create new profile with automatic database storage
+4. **Order Linking**: Orders automatically linked to customer profiles
 
-### Payment Processing
-1. **Select Payment Method**: Cash, Card, or On Collection
+#### Payment Processing (ZAR Currency)
+1. **Payment Selection**: Opens modal with payment method options
 2. **Cash Payments**: 
-   - Use note and coin selector interface
-   - System calculates change automatically
-   - Validate sufficient payment before completion
-3. **Card/On Collection**: Simple selection without cash handling
+   - Use South African note and coin selector
+   - Automatic change calculation in Rand
+   - R10, R20, R50, R100, R200 notes + R1, R2, R5 coins
+3. **Card/Collection**: Simple selection for non-cash payments
 
 ## 🔧 Configuration
 
-### Environment Setup
-The application uses localStorage for data persistence. No external database configuration required for development.
+### Database Configuration
+```bash
+# PostgreSQL Connection
+Database: laundry_os
+User: postgres
+Password: Admin
+Port: 5432
+Host: localhost
+
+# Environment Variables (.env in laundry-api/)
+DATABASE_URL="postgresql://postgres:Admin@localhost:5432/laundry_os"
+JWT_SECRET="your-secure-secret-key"
+PORT=3001
+```
 
 ### Customization Options
 
-#### Service Categories & Items
+#### Service Items & Pricing
 Edit `src/pages/NewOrder.tsx` to modify:
-- Service categories (Dry Cleaning, Laundry, etc.)
-- Item catalog and pricing
-- Available stains and damage types
+```typescript
+const ITEMS_DATA = {
+  "Dry Cleaning": [
+    { id: "blazer", name: "Blazer", price: 250.0 },
+    { id: "dress", name: "Dress", price: 290.0 },
+    // Add more items...
+  ]
+};
+```
+
+#### Order Status Workflow
+Modify order statuses in:
+- Frontend: `src/pages/Process.tsx` (status columns)
+- Backend: `laundry-api/prisma/schema.prisma` (OrderStatus enum)
 
 #### Payment Methods
-Modify payment options in `src/pages/NewOrder.tsx`:
-- South African currency denominations
-- Payment method types
-- Currency formatting
+Configure in `src/pages/NewOrder.tsx`:
+```typescript
+const PAYMENT_OPTIONS = [
+  { id: 'cash', name: 'Cash Payment', description: 'Pay with South African Rand' },
+  { id: 'card', name: 'Card Payment', description: 'Credit/Debit card' },
+  { id: 'on_collection', name: 'Pay on Collection', description: 'Pay when collecting' }
+];
+```
 
-#### User Roles
-Extend role system in `src/contexts/AuthContext.tsx`:
-- Add new user roles
-- Modify permission structures
-- Update role-based access controls
+### Database Management
+```bash
+# Reset database (development)
+cd laundry-api
+npx prisma migrate reset
+
+# Generate Prisma client after schema changes
+npx prisma generate
+
+# View database with Prisma Studio
+npx prisma studio
+```
 
 ## 🛡️ Security Features
 
-### Authentication
-- **Password Validation**: Minimum 6 characters required
-- **Role-based Access**: Different permissions for admin/cashier
-- **Session Management**: Secure session handling with localStorage
+### Authentication & Authorization
+- **JWT Tokens**: Secure authentication with refresh capability
+- **Password Hashing**: bcrypt for secure password storage
+- **Role-based Access**: Admin/Cashier permissions enforced at API level
+- **Input Validation**: Zod schema validation on all endpoints
 
-### Data Protection
-- **Client-side Storage**: All data stored locally for privacy
-- **Input Validation**: Zod schema validation on all forms
+### Data Security
+- **PostgreSQL**: Secure relational database with ACID compliance
+- **API Authentication**: All endpoints protected with JWT middleware
 - **XSS Prevention**: React's built-in XSS protection
+- **SQL Injection Prevention**: Prisma ORM with parameterized queries
 
 ## 🤝 Contributing
 
 ### Development Guidelines
-1. **Code Style**: Follow existing TypeScript and React patterns
-2. **Component Structure**: Use functional components with hooks
-3. **Styling**: Utilize Tailwind CSS and shadcn/ui components
-4. **Type Safety**: Maintain strict TypeScript typing
+1. **Code Style**: Follow TypeScript and React best practices
+2. **Database Changes**: Use Prisma migrations for schema updates
+3. **API Development**: Maintain RESTful API conventions
+4. **Authentication**: Ensure all new endpoints use JWT middleware
 
 ### Adding Features
-1. **New Pages**: Add to `src/pages/` and update routing in `App.tsx`
-2. **New Components**: Create in `src/components/` with proper exports
-3. **State Management**: Use React Context for global state
-4. **Forms**: Implement with React Hook Form and Zod validation
+1. **Database Schema**: Update `prisma/schema.prisma` and run migrations
+2. **API Endpoints**: Add routes in `laundry-api/src/routes/`
+3. **Frontend Integration**: Update API client in `src/lib/api.ts`
+4. **UI Components**: Create in `src/components/` or `src/pages/`
+
+### Database Development
+```bash
+# Create new migration
+npx prisma migrate dev --name feature_name
+
+# Reset development database
+npx prisma migrate reset
+
+# View database
+npx prisma studio
+```
 
 ## 📋 Dependencies
 
-### Production Dependencies
+### Frontend Dependencies
 - **React Ecosystem**: React 18, React Router DOM, React Hook Form
 - **UI Framework**: shadcn/ui components, Radix UI primitives
 - **Styling**: Tailwind CSS with class variance authority
@@ -288,22 +380,78 @@ Extend role system in `src/contexts/AuthContext.tsx`:
 - **Icons**: Lucide React for consistent iconography
 - **Notifications**: Sonner for toast messages
 
+### Backend Dependencies
+- **Server**: Express.js with TypeScript support
+- **Database**: Prisma ORM with PostgreSQL adapter
+- **Authentication**: jsonwebtoken, bcryptjs for password hashing
+- **Validation**: Zod for API request validation
+- **CORS**: Cross-origin resource sharing support
+
 ### Development Dependencies
-- **Build Tools**: Vite, TypeScript, ESLint
-- **Type Definitions**: @types packages for Node, React
-- **Code Quality**: ESLint with React and TypeScript rules
+- **Build Tools**: Vite (Frontend), tsc (Backend)
+- **Type Definitions**: @types packages for Node, React, Express
+- **Code Quality**: ESLint with TypeScript rules
+- **Database Tools**: Prisma CLI for migrations and management
+
+## 🔄 System Requirements
+
+### Production Environment
+- **Node.js**: 18+ (LTS recommended)
+- **PostgreSQL**: 18+ with connection pooling
+- **Memory**: 2GB RAM minimum, 4GB recommended
+- **Storage**: 10GB minimum for database and application
+- **Network**: HTTPS recommended for production
+
+### Development Environment
+- **Node.js**: 18+ with npm 8+
+- **PostgreSQL**: Local installation or Docker container
+- **IDE**: VS Code with recommended extensions:
+  - TypeScript and JavaScript Language Features
+  - Prisma Extension
+  - Tailwind CSS IntelliSense
+  - ES7+ React/Redux/React-Native snippets
+
+## 📈 Features Roadmap
+
+### Completed ✅
+- Complete PostgreSQL integration with Prisma ORM
+- JWT authentication with role-based access control
+- Full order processing workflow (To-Do → Pickup)
+- South African Rand currency integration
+- Real-time order status updates
+- Customer management with order history
+- Responsive UI with LaundryOS branding
+
+### In Development 🚧
+- Advanced reporting and analytics
+- Inventory management system
+- SMS/Email notifications for order updates
+- Multi-location support
+
+### Planned 📋
+- Mobile app for customers
+- Integration with payment gateways
+- Advanced pricing rules and discounts
+- Automated backup and restore
 
 ## 📄 License
 
-This project is open source. See the repository for license details.
+This project is open source. See the LICENSE file in the repository for details.
 
-## 🆘 Support
+## 🆘 Support & Documentation
 
 For issues, feature requests, or questions:
 1. **GitHub Issues**: Create an issue in the repository
-2. **Documentation**: Refer to this README and code comments
-3. **Community**: Check existing issues and discussions
+2. **Database Issues**: Check PostgreSQL connection and Prisma configuration
+3. **API Documentation**: Refer to endpoint documentation in code comments
+4. **Setup Help**: Follow the detailed installation guide above
+
+### Common Troubleshooting
+- **Database Connection**: Verify PostgreSQL is running and credentials are correct
+- **Port Conflicts**: Backend uses 3001, frontend uses 8083 (or next available)
+- **Authentication Issues**: Clear browser storage and re-login
+- **Migration Errors**: Reset database with `npx prisma migrate reset`
 
 ---
 
-**LaundryOS** - Streamlining laundry and dry cleaning operations with modern technology. 🚀
+**LaundryOS** - Complete laundry and dry cleaning business management with modern technology and South African localization. 🚀

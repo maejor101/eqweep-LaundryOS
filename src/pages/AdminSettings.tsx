@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth, User, UserRole } from '../contexts/AuthContext';
 import { AdminOnly } from '../components/RoleGuard';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
@@ -19,7 +19,8 @@ import {
   ToggleLeft,
   ToggleRight,
   Search,
-  Shield
+  Shield,
+  Loader2
 } from 'lucide-react';
 import {
   Table,
@@ -44,51 +45,110 @@ import {
   SelectTrigger,
   SelectValue,
 } from '../components/ui/select';
-
-// Mock data for users - in real app, this would come from an API
-const mockUsers: User[] = [
-  {
-    id: '1',
-    name: 'John Admin',
-    email: 'admin@laundromat.com',
-    role: 'admin',
-    isActive: true,
-    createdAt: '2024-01-15T10:00:00Z',
-    lastLogin: '2024-11-14T08:30:00Z',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=admin@laundromat.com'
-  },
-  {
-    id: '2',
-    name: 'Sarah Johnson',
-    email: 'sarah@laundromat.com',
-    role: 'cashier',
-    isActive: true,
-    createdAt: '2024-02-20T14:30:00Z',
-    lastLogin: '2024-11-14T09:15:00Z',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=sarah@laundromat.com'
-  },
-  {
-    id: '3',
-    name: 'Mike Wilson',
-    email: 'mike@laundromat.com',
-    role: 'cashier',
-    isActive: false,
-    createdAt: '2024-03-10T11:20:00Z',
-    lastLogin: '2024-11-10T16:45:00Z',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=mike@laundromat.com'
-  }
-];
+import { apiClient } from '../lib/api';
 
 const AdminSettings: React.FC = () => {
   const { user } = useAuth();
-  const [users, setUsers] = useState<User[]>(mockUsers);
+  const [users, setUsers] = useState<User[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [isAddUserOpen, setIsAddUserOpen] = useState(false);
-  const [newUser, setNewUser] = useState<{ name: string; email: string; role: UserRole }>({ 
+  const [isLoading, setIsLoading] = useState(true);
+  const [isCreatingUser, setIsCreatingUser] = useState(false);
+  const [newUser, setNewUser] = useState<{ 
+    name: string; 
+    email: string; 
+    password: string; 
+    role: UserRole 
+  }>({ 
     name: '', 
     email: '', 
+    password: '',
     role: 'cashier' 
   });
+
+  // Load users from database
+  useEffect(() => {
+    loadUsers();
+  }, []);
+
+  const loadUsers = async () => {
+    setIsLoading(true);
+    try {
+      const fetchedUsers = await apiClient.getUsers();
+      setUsers(fetchedUsers);
+    } catch (error) {
+      console.error('Error loading users:', error);
+      setUsers([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const toggleUserStatus = async (userId: string) => {
+    try {
+      const userToUpdate = users.find(u => u.id === userId);
+      if (!userToUpdate) return;
+
+      const updatedUser = await apiClient.updateUser(userId, { 
+        isActive: !userToUpdate.isActive 
+      });
+      
+      if (updatedUser) {
+        await loadUsers(); // Reload users to get fresh data
+      }
+    } catch (error) {
+      console.error('Error toggling user status:', error);
+    }
+  };
+
+  const deleteUser = async (userId: string) => {
+    if (userId === user?.id) {
+      alert("You cannot delete your own account!");
+      return;
+    }
+
+    if (!confirm('Are you sure you want to delete this user? This action cannot be undone.')) {
+      return;
+    }
+
+    try {
+      await apiClient.deactivateUser(userId);
+      await loadUsers(); // Reload users
+    } catch (error) {
+      console.error('Error deleting user:', error);
+    }
+  };
+
+  const addUser = async () => {
+    if (!newUser.name || !newUser.email || !newUser.password) {
+      alert('Please fill in all required fields');
+      return;
+    }
+
+    if (newUser.password.length < 6) {
+      alert('Password must be at least 6 characters long');
+      return;
+    }
+
+    setIsCreatingUser(true);
+    try {
+      await apiClient.createUser({
+        name: newUser.name,
+        email: newUser.email,
+        password: newUser.password,
+        role: newUser.role
+      });
+      
+      await loadUsers(); // Reload users to get fresh data
+      setNewUser({ name: '', email: '', password: '', role: 'cashier' });
+      setIsAddUserOpen(false);
+    } catch (error: any) {
+      console.error('Error creating user:', error);
+      alert(error.message || 'Failed to create user');
+    } finally {
+      setIsCreatingUser(false);
+    }
+  };
 
   const getInitials = (name: string) => {
     return name.split(' ').map(n => n[0]).join('').toUpperCase();
@@ -119,38 +179,6 @@ const AdminSettings: React.FC = () => {
     u.email.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const toggleUserStatus = (userId: string) => {
-    setUsers(users.map(u => 
-      u.id === userId ? { ...u, isActive: !u.isActive } : u
-    ));
-  };
-
-  const deleteUser = (userId: string) => {
-    if (userId === user?.id) {
-      alert("You cannot delete your own account!");
-      return;
-    }
-    setUsers(users.filter(u => u.id !== userId));
-  };
-
-  const addUser = () => {
-    if (!newUser.name || !newUser.email) return;
-    
-    const user: User = {
-      id: Math.random().toString(36).substr(2, 9),
-      name: newUser.name,
-      email: newUser.email,
-      role: newUser.role,
-      isActive: true,
-      createdAt: new Date().toISOString(),
-      avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${newUser.email}`
-    };
-    
-    setUsers([...users, user]);
-    setNewUser({ name: '', email: '', role: 'cashier' });
-    setIsAddUserOpen(false);
-  };
-
   return (
     <AdminOnly>
       <div className="container mx-auto px-4 py-8 max-w-6xl">
@@ -164,6 +192,10 @@ const AdminSettings: React.FC = () => {
                 <p className="text-muted-foreground">Manage users and system settings</p>
               </div>
             </div>
+            <Button onClick={loadUsers} variant="outline">
+              <Users className="h-4 w-4 mr-2" />
+              Refresh
+            </Button>
           </div>
 
           {/* System Overview */}
@@ -215,7 +247,7 @@ const AdminSettings: React.FC = () => {
                     User Management
                   </CardTitle>
                   <CardDescription>
-                    Manage user accounts, roles, and permissions
+                    Manage user accounts, roles, and permissions from PostgreSQL database
                   </CardDescription>
                 </div>
                 

@@ -35,9 +35,27 @@ const Header = () => {
           </Button>
           
           <div className="flex items-center gap-2">
-            <Link to="/" className="h-10 w-10 rounded-lg bg-primary flex items-center justify-center">
-              <svg viewBox="0 0 24 24" className="h-6 w-6 text-primary-foreground" fill="currentColor">
-                <path d="M12 2L4 6v6c0 5.5 3.8 10.7 8 12 4.2-1.3 8-6.5 8-12V6l-8-4z"/>
+            <Link to="/" className="flex items-center gap-2 px-3 py-2 rounded-lg">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 620 160" className="h-12" aria-label="LaundryOS logo">
+                <defs>
+                  <style>{`.brand-dark{fill:#4d4d4d;stroke:none}.wordmark{font-family:"Poppins","Montserrat","Segoe UI","Arial",sans-serif;font-weight:600;font-size:76.8px;dominant-baseline:alphabetic}`}</style>
+                  <mask id="m-door">
+                    <rect width="120" height="120" rx="14" fill="#fff"/>
+                    <circle cx="60" cy="60" r="28"/>
+                  </mask>
+                </defs>
+                <g transform="translate(16 20)">
+                  <rect width="120" height="120" rx="14" style={{stroke:'#4d4d4d', strokeWidth:10, strokeLinecap:'round', strokeLinejoin:'round', fill:'none'}}/>
+                  <g mask="url(#m-door)">
+                    <rect width="120" height="120" rx="14" fill="#fff"/>
+                    <circle cx="60" cy="60" r="26" className="brand-dark"/>
+                    <circle cx="60" cy="60" r="8" fill="#46b7b7"/>
+                    <path d="M74 46a6 6 0 1 1-.1 0" fill="#46b7b7" opacity=".9"/>
+                  </g>
+                  <circle cx="102" cy="18" r="6" className="brand-dark"/>
+                </g>
+                <text className="wordmark" fill="#4d4d4d" transform="translate(160 95)">Laundry</text>
+                <text x="290" className="wordmark" fill="#46b7b7" transform="translate(160 95)">OS</text>
               </svg>
             </Link>
           </div>

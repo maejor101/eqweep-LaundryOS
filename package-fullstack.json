@@ -1,0 +1,17 @@
+{
+  "name": "laundry-fullstack",
+  "version": "1.0.0",
+  "description": "LaundryOS with PostgreSQL backend",
+  "scripts": {
+    "dev": "concurrently \"npm run dev:api\" \"npm run dev:frontend\"",
+    "dev:api": "cd laundry-api && npm run dev",
+    "dev:frontend": "npm run dev --prefix .",
+    "build": "npm run build:frontend && npm run build:api",
+    "build:frontend": "npm run build",
+    "build:api": "cd laundry-api && npm run build",
+    "start": "cd laundry-api && npm start"
+  },
+  "devDependencies": {
+    "concurrently": "^7.6.0"
+  }
+}
