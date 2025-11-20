@@ -8,7 +8,16 @@
     "build": "vite build",
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "docker:setup": "powershell -File .\\scripts\\setup.ps1",
+    "docker:test": "powershell -File .\\scripts\\test-docker.ps1",
+    "docker:dev": "docker-compose -f docker-compose.dev.yml up --build",
+    "docker:qa": "docker-compose -f docker-compose.qa.yml up --build -d",
+    "docker:stop": "docker-compose -f docker-compose.dev.yml down && docker-compose -f docker-compose.qa.yml down",
+    "docker:logs:dev": "docker-compose -f docker-compose.dev.yml logs -f",
+    "docker:logs:qa": "docker-compose -f docker-compose.qa.yml logs -f",
+    "docker:reset-dev": "docker-compose -f docker-compose.dev.yml exec backend-dev npx prisma migrate reset --force",
+    "docker:reset-qa": "docker-compose -f docker-compose.qa.yml exec backend-qa npx prisma migrate reset --force"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",

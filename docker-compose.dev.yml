@@ -1,0 +1,76 @@
+services:
+  # PostgreSQL Database
+  postgres-dev:
+    image: postgres:15-alpine
+    container_name: laundryos-postgres-dev
+    environment:
+      POSTGRES_DB: laundry_os_dev
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: DevPassword123
+      POSTGRES_HOST_AUTH_METHOD: trust
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_dev_data:/var/lib/postgresql/data
+    networks:
+      - laundryos-dev
+    restart: unless-stopped
+
+  # Backend API
+  backend-dev:
+    build:
+      context: ./laundry-api
+      dockerfile: Dockerfile
+    container_name: laundryos-backend-dev
+    environment:
+      NODE_ENV: development
+      DATABASE_URL: "postgresql://postgres:DevPassword123@postgres-dev:5432/laundry_os_dev?schema=public"
+      JWT_SECRET: "dev-jwt-secret-key-2024"
+      JWT_EXPIRES_IN: "7d"
+      PORT: 3001
+      CORS_ORIGIN: "http://localhost:8080"
+      FRONTEND_URL: "http://localhost:8080"
+    ports:
+      - "3001:3001"
+    depends_on:
+      - postgres-dev
+    volumes:
+      - ./laundry-api:/app
+      - /app/node_modules
+    networks:
+      - laundryos-dev
+    command: >
+      sh -c "
+        echo 'Waiting for database...' &&
+        sleep 10 &&
+        npx prisma migrate deploy &&
+        npm run dev
+      "
+    restart: unless-stopped
+
+  # Frontend
+  frontend-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+      target: builder
+    container_name: laundryos-frontend-dev
+    environment:
+      VITE_API_URL: "http://localhost:3001/api"
+      NODE_ENV: development
+    ports:
+      - "8080:5173"
+    volumes:
+      - .:/app
+      - /app/node_modules
+    networks:
+      - laundryos-dev
+    command: npm run dev -- --host 0.0.0.0 --port 5173
+    restart: unless-stopped
+
+volumes:
+  postgres_dev_data:
+
+networks:
+  laundryos-dev:
+    driver: bridge

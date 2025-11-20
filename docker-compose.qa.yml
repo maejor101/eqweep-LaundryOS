@@ -1,0 +1,70 @@
+services:
+  # PostgreSQL Database
+  postgres-qa:
+    image: postgres:15-alpine
+    container_name: laundryos-postgres-qa
+    environment:
+      POSTGRES_DB: laundry_os_qa
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: QaPassword456
+      POSTGRES_HOST_AUTH_METHOD: trust
+    ports:
+      - "5434:5432"
+    volumes:
+      - postgres_qa_data:/var/lib/postgresql/data
+    networks:
+      - laundryos-qa
+    restart: unless-stopped
+
+  # Backend API
+  backend-qa:
+    build:
+      context: ./laundry-api
+      dockerfile: Dockerfile
+    container_name: laundryos-backend-qa
+    environment:
+      NODE_ENV: qa
+      DATABASE_URL: "postgresql://postgres:QaPassword456@postgres-qa:5432/laundry_os_qa?schema=public"
+      JWT_SECRET: "qa-jwt-secret-key-2024"
+      JWT_EXPIRES_IN: "7d"
+      PORT: 3001
+      CORS_ORIGIN: "http://localhost:8081"
+      FRONTEND_URL: "http://localhost:8081"
+    ports:
+      - "3002:3001"
+    depends_on:
+      - postgres-qa
+    networks:
+      - laundryos-qa
+    command: >
+      sh -c "
+        echo 'Waiting for database...' &&
+        sleep 10 &&
+        npx prisma migrate deploy &&
+        npm run start
+      "
+    restart: unless-stopped
+
+  # Frontend
+  frontend-qa:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    container_name: laundryos-frontend-qa
+    environment:
+      VITE_API_URL: "http://localhost:3002/api"
+      NODE_ENV: qa
+    ports:
+      - "8081:80"
+    depends_on:
+      - backend-qa
+    networks:
+      - laundryos-qa
+    restart: unless-stopped
+
+volumes:
+  postgres_qa_data:
+
+networks:
+  laundryos-qa:
+    driver: bridge
