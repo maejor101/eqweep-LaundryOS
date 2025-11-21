@@ -13,8 +13,8 @@ RUN addgroup -g 1001 -S nodejs && \
 COPY package*.json ./
 COPY prisma/schema.prisma ./prisma/
 
-# Install dependencies with cache mount
-RUN --mount=type=cache,target=/root/.npm \
+# Install dependencies with cache mount (Railway-compatible format)
+RUN --mount=type=cache,id=npm,target=/root/.npm \
     npm ci --prefer-offline && \
     npm cache clean --force
 

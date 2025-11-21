@@ -31,7 +31,7 @@ services:
       CORS_ORIGIN: "http://localhost:8081"
       FRONTEND_URL: "http://localhost:8081"
     ports:
-      - "3002:3001"
+      - "3004:3001"
     depends_on:
       - postgres-qa
     networks:
@@ -52,10 +52,12 @@ services:
       dockerfile: Dockerfile.frontend
     container_name: laundryos-frontend-qa
     environment:
-      VITE_API_URL: "http://localhost:3002/api"
+      VITE_API_URL: "http://localhost:3004/api"
       NODE_ENV: qa
     ports:
       - "8081:80"
+    volumes:
+      - ./nginx.qa.conf:/etc/nginx/nginx.conf:ro
     depends_on:
       - backend-qa
     networks:
