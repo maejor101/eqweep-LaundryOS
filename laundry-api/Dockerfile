@@ -13,7 +13,7 @@ RUN addgroup -g 1001 -S nodejs && \
 COPY package*.json ./
 COPY prisma/schema.prisma ./prisma/
 
-# Install dependencies
+# Install dependencies (Railway compatible - no cache mounts)
 RUN npm ci --prefer-offline && \
     npm cache clean --force
 
