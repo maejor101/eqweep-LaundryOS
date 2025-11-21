@@ -10,8 +10,8 @@ export default defineConfig(({ mode }) => ({
     port: 8080,
   },
   preview: {
-    port: 80,
-    host: "::",
+    port: process.env.PORT ? parseInt(process.env.PORT) : 3000,
+    host: "0.0.0.0",
   },
   build: {
     outDir: "dist",
