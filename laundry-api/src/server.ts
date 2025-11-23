@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import path from 'path';
 import { PrismaClient } from '@prisma/client';
 
 // Enable API routes
@@ -46,9 +47,14 @@ app.use(cors({
     'http://localhost:8080',
     'http://localhost:8081', 
     'http://localhost:8082',
-    process.env.FRONTEND_URL || 'http://localhost:3000'
+    'http://localhost:3000',
+    process.env.FRONTEND_URL || 'http://localhost:3000',
+    // Railway production domains
+    /.*\.up\.railway\.app$/
   ],
-  credentials: true
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'Origin', 'X-Requested-With']
 }));
 
 app.use(express.json({ limit: '10mb' }));
@@ -60,29 +66,65 @@ app.use((req, res, next) => {
   next();
 });
 
-// Health check endpoint
-app.get('/', (req, res) => {
-  res.json({
-    message: 'LaundryOS API is running!',
-    version: '1.0.0',
-    environment: process.env.NODE_ENV || 'development'
-  });
-});
-
-app.get('/api/health', (req, res) => {
-  res.json({
-    status: 'OK',
-    message: 'LaundryOS API Health Check',
-    timestamp: new Date().toISOString(),
-    uptime: process.uptime()
-  });
-});
-
 // API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/customers', customerRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/users', userRoutes);
+
+// Health check endpoint
+app.get('/api/health', (req, res) => {
+  res.json({
+    status: 'OK',
+    message: 'LaundryOS API Health Check',
+    timestamp: new Date().toISOString(),
+    uptime: Math.floor(process.uptime())
+  });
+});
+
+// Serve static frontend files in production
+if (process.env.NODE_ENV === 'production') {
+  const frontendPath = path.join(__dirname, '../../dist');
+  console.log(`📁 Serving frontend from: ${frontendPath}`);
+  
+  app.use(express.static(frontendPath, {
+    maxAge: '1d',
+    etag: false
+  }));
+  
+  // Catch all handler: send back frontend index.html for SPA routing
+  app.get('*', (req, res) => {
+    // Don't serve index.html for API routes
+    if (req.path.startsWith('/api/')) {
+      return res.status(404).json({ 
+        error: 'API endpoint not found',
+        path: req.path,
+        method: req.method
+      });
+    }
+    
+    res.sendFile(path.join(frontendPath, 'index.html'));
+  });
+} else {
+  // Development mode - just show API info
+  app.get('/', (req, res) => {
+    res.json({
+      message: 'LaundryOS API is running!',
+      version: '1.0.0',
+      environment: process.env.NODE_ENV || 'development',
+      frontend: 'Run separately in development'
+    });
+  });
+}
+
+// 404 handler for API routes only
+app.use('/api/*', (req, res) => {
+  res.status(404).json({
+    error: 'API endpoint not found',
+    path: req.path,
+    method: req.method
+  });
+});
 
 // Error handling middleware
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
@@ -91,11 +133,6 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
     error: err.message || 'Internal server error',
     ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
   });
-});
-
-// 404 handler
-app.use('*', (req, res) => {
-  res.status(404).json({ error: 'Route not found' });
 });
 
 // Start server
