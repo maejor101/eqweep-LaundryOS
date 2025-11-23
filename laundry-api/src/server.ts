@@ -84,65 +84,51 @@ app.get('/api/health', (req, res) => {
 
 // Serve static frontend files in production
 if (process.env.NODE_ENV === 'production') {
-  // Try multiple possible frontend locations
-  const possiblePaths = [
-    '/app/dist',
-    '/app/laundry-api/public', 
-    path.join(__dirname, '../public'),
-    path.join(__dirname, '../../dist')
-  ];
+  // Use the copied React build files
+  const frontendPath = path.join(__dirname, '../public');
+  console.log(`📁 Serving React frontend from: ${frontendPath}`);
   
-  let frontendPath = '';
   const fs = require('fs');
-  
-  for (const testPath of possiblePaths) {
-    if (fs.existsSync(testPath) && fs.existsSync(path.join(testPath, 'index.html'))) {
-      frontendPath = testPath;
-      break;
-    }
-  }
-  
-  if (frontendPath) {
-    console.log(`📁 Serving frontend from: ${frontendPath}`);
+  if (fs.existsSync(frontendPath) && fs.existsSync(path.join(frontendPath, 'index.html'))) {
+    console.log(`✅ React frontend files found at: ${frontendPath}`);
+    
     app.use(express.static(frontendPath, {
       maxAge: '1d',
       etag: false
     }));
+    
+    // Catch all handler for React Router SPA routing
+    app.get('*', (req, res) => {
+      // Don't serve index.html for API routes
+      if (req.path.startsWith('/api/')) {
+        return res.status(404).json({ 
+          error: 'API endpoint not found',
+          path: req.path,
+          method: req.method
+        });
+      }
+      
+      const indexPath = path.join(frontendPath, 'index.html');
+      console.log(`📄 Serving React app from: ${indexPath}`);
+      res.sendFile(indexPath);
+    });
   } else {
-    console.log(`❌ No frontend files found, using fallback`);
-    // Serve a basic fallback page
+    console.log(`❌ React frontend not found at: ${frontendPath}, using fallback`);
     app.get('/', (req, res) => {
       res.send(`
         <!DOCTYPE html>
         <html>
-        <head><title>LaundryOS</title></head>
+        <head><title>LaundryOS - Building Frontend...</title></head>
         <body>
-          <h1>🧺 LaundryOS API Server</h1>
-          <p>✅ Backend running successfully</p>
+          <h1>🧺 LaundryOS</h1>
+          <p>⚠️ React frontend is building... Please wait.</p>
           <p><a href="/api/health">API Health Check</a></p>
+          <script>setTimeout(() => location.reload(), 10000);</script>
         </body>
         </html>
       `);
     });
   }
-  
-  // Catch all handler for SPA routing
-  app.get('*', (req, res) => {
-    if (req.path.startsWith('/api/')) {
-      return res.status(404).json({ 
-        error: 'API endpoint not found',
-        path: req.path,
-        method: req.method
-      });
-    }
-    
-    if (frontendPath) {
-      const indexPath = path.join(frontendPath, 'index.html');
-      res.sendFile(indexPath);
-    } else {
-      res.redirect('/');
-    }
-  });
 } else {
   // Development mode - just show API info
   app.get('/', (req, res) => {

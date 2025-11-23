@@ -2,7 +2,7 @@
   "$schema": "https://railway.app/railway.schema.json",
   "build": {
     "builder": "nixpacks",
-    "buildCommand": "npm run build && cd laundry-api && npm run build"
+    "buildCommand": "npm install && npm run build && cd laundry-api && npm install && npm run build && mkdir -p ../laundry-api/public && cp -r ../dist/* ../laundry-api/public/"
   },
   "deploy": {
     "startCommand": "cd laundry-api && npm start",
