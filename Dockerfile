@@ -36,14 +36,17 @@ RUN echo "=== Build Verification ===" && \
     echo "Frontend files in /app/dist:" && \
     ls -la /app/dist/ && \
     echo "Backend files in /app/laundry-api/dist:" && \
-    ls -la /app/laundry-api/dist/
+    ls -la /app/laundry-api/dist/ && \
+    echo "Frontend index.html check:" && \
+    test -f /app/dist/index.html && echo "✅ index.html exists" || echo "❌ index.html missing"
 
 # Create non-root user
 RUN addgroup -g 1001 -S nodejs && \
     adduser -S nextjs -u 1001
 
-# Set proper permissions
-RUN chown -R nextjs:nodejs /app
+# Set proper permissions AFTER builds are complete
+RUN chown -R nextjs:nodejs /app && \
+    chmod -R 755 /app/dist
 
 USER nextjs
 
