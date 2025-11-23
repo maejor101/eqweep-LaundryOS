@@ -84,28 +84,50 @@ app.get('/api/health', (req, res) => {
 
 // Serve static frontend files in production
 if (process.env.NODE_ENV === 'production') {
-  // Use absolute path to frontend build directory in Docker container
-  const frontendPath = '/app/dist';
-  console.log(`📁 Serving frontend from: ${frontendPath}`);
+  // Try multiple possible frontend locations
+  const possiblePaths = [
+    '/app/dist',
+    '/app/laundry-api/public', 
+    path.join(__dirname, '../public'),
+    path.join(__dirname, '../../dist')
+  ];
   
-  // Check if frontend directory exists
+  let frontendPath = '';
   const fs = require('fs');
-  if (!fs.existsSync(frontendPath)) {
-    console.error(`❌ Frontend directory not found: ${frontendPath}`);
-    console.log(`📂 Current directory: ${process.cwd()}`);
-    console.log(`📂 __dirname: ${__dirname}`);
-  } else {
-    console.log(`✅ Frontend directory exists: ${frontendPath}`);
+  
+  for (const testPath of possiblePaths) {
+    if (fs.existsSync(testPath) && fs.existsSync(path.join(testPath, 'index.html'))) {
+      frontendPath = testPath;
+      break;
+    }
   }
   
-  app.use(express.static(frontendPath, {
-    maxAge: '1d',
-    etag: false
-  }));
+  if (frontendPath) {
+    console.log(`📁 Serving frontend from: ${frontendPath}`);
+    app.use(express.static(frontendPath, {
+      maxAge: '1d',
+      etag: false
+    }));
+  } else {
+    console.log(`❌ No frontend files found, using fallback`);
+    // Serve a basic fallback page
+    app.get('/', (req, res) => {
+      res.send(`
+        <!DOCTYPE html>
+        <html>
+        <head><title>LaundryOS</title></head>
+        <body>
+          <h1>🧺 LaundryOS API Server</h1>
+          <p>✅ Backend running successfully</p>
+          <p><a href="/api/health">API Health Check</a></p>
+        </body>
+        </html>
+      `);
+    });
+  }
   
-  // Catch all handler: send back frontend index.html for SPA routing
+  // Catch all handler for SPA routing
   app.get('*', (req, res) => {
-    // Don't serve index.html for API routes
     if (req.path.startsWith('/api/')) {
       return res.status(404).json({ 
         error: 'API endpoint not found',
@@ -114,9 +136,12 @@ if (process.env.NODE_ENV === 'production') {
       });
     }
     
-    const indexPath = path.join(frontendPath, 'index.html');
-    console.log(`📄 Serving index.html from: ${indexPath}`);
-    res.sendFile(indexPath);
+    if (frontendPath) {
+      const indexPath = path.join(frontendPath, 'index.html');
+      res.sendFile(indexPath);
+    } else {
+      res.redirect('/');
+    }
   });
 } else {
   // Development mode - just show API info
