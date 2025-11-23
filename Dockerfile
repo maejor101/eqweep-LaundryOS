@@ -7,52 +7,38 @@ COPY package*.json bun.lockb ./
 COPY laundry-api/package*.json ./laundry-api/
 COPY laundry-api/prisma ./laundry-api/prisma
 
-# Install frontend dependencies
+# Install all dependencies
 RUN npm install
 
 # Install backend dependencies
 WORKDIR /app/laundry-api
 RUN npm install
+RUN npx prisma generate
 
-# Go back to root
+# Go back to root and copy all source code
 WORKDIR /app
-
-# Copy source code
 COPY . .
 
-# Build frontend and verify it was created
+# Build frontend first and verify
 RUN npm run build && \
-    ls -la /app/dist && \
-    echo "Frontend build completed, files:" && \
-    find /app/dist -type f | head -10
-
-# Build backend and generate Prisma client
-WORKDIR /app/laundry-api
-RUN npx prisma generate
-RUN npm run build
-
-# Verify both builds exist
-RUN echo "=== Build Verification ===" && \
-    echo "Frontend files in /app/dist:" && \
+    echo "=== Frontend Build Complete ===" && \
     ls -la /app/dist/ && \
-    echo "Backend files in /app/laundry-api/dist:" && \
-    ls -la /app/laundry-api/dist/ && \
-    echo "Frontend index.html check:" && \
-    test -f /app/dist/index.html && echo "✅ index.html exists" || echo "❌ index.html missing"
+    test -f /app/dist/index.html && echo "✅ Frontend index.html created successfully"
 
-# Create non-root user
-RUN addgroup -g 1001 -S nodejs && \
-    adduser -S nextjs -u 1001
+# Build backend
+WORKDIR /app/laundry-api
+RUN npm run build && \
+    echo "=== Backend Build Complete ===" && \
+    ls -la /app/laundry-api/dist/
 
-# Set proper permissions AFTER builds are complete
-RUN chown -R nextjs:nodejs /app && \
-    chmod -R 755 /app/dist
-
-USER nextjs
+# Go back to app root and set up for serving
+WORKDIR /app
 
 # Expose port
 EXPOSE 3000
 
+# Set NODE_ENV for production
+ENV NODE_ENV=production
+
 # Start the unified server
-WORKDIR /app/laundry-api
-CMD ["node", "dist/server.js"]
+CMD ["node", "laundry-api/dist/server.js"]
