@@ -1,46 +1,43 @@
-# LaundryOS Unified Service - Force fresh build v4
-FROM node:20-alpine AS base
+# COMPLETELY NEW BUILD - Railway cache workaround v5
+FROM node:20-bullseye
 
-# Create app directory
 WORKDIR /app
 
-# Copy package files
+# Copy and install frontend dependencies
 COPY package*.json bun.lockb ./
+RUN npm install --no-cache
+
+# Copy and install backend dependencies  
 COPY laundry-api/package*.json ./laundry-api/
 COPY laundry-api/prisma ./laundry-api/prisma
-
-# Install dependencies
-RUN npm ci --prefer-offline && npm cache clean --force
-
-# Install backend dependencies and generate Prisma client
 WORKDIR /app/laundry-api
-RUN npm ci --prefer-offline && npm cache clean --force
+RUN npm install --no-cache
 RUN npx prisma generate
 
-# Copy source code
+# Copy all source code
 WORKDIR /app
 COPY . .
 
-# Build frontend with verbose output
-RUN echo "Building frontend..." && \
+# Build frontend with maximum verbosity
+RUN echo "=== STARTING FRONTEND BUILD ===" && \
     npm run build && \
-    echo "Frontend build completed!" && \
+    echo "=== FRONTEND BUILD COMPLETE ===" && \
+    echo "Listing app directory:" && \
     ls -la /app/ && \
-    echo "Contents of dist directory:" && \
+    echo "Listing dist directory:" && \
     ls -la /app/dist/ && \
-    echo "Testing for index.html..." && \
-    test -f /app/dist/index.html && echo "✅ index.html found!" || echo "❌ index.html NOT found!"
+    echo "Checking for index.html:" && \
+    if [ -f /app/dist/index.html ]; then echo "SUCCESS: index.html exists!"; else echo "FAIL: index.html missing!"; fi
 
 # Build backend
-WORKDIR /app/laundry-api
+WORKDIR /app/laundry-api  
 RUN npm run build
 
-# Final working directory
+# Set working directory for runtime
 WORKDIR /app
 
-# Environment
+# Environment variables
 ENV NODE_ENV=production
-ENV PORT=3000
 
 # Expose port
 EXPOSE 3000
