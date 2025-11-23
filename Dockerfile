@@ -20,13 +20,23 @@ WORKDIR /app
 # Copy source code
 COPY . .
 
-# Build frontend
-RUN npm run build
+# Build frontend and verify it was created
+RUN npm run build && \
+    ls -la /app/dist && \
+    echo "Frontend build completed, files:" && \
+    find /app/dist -type f | head -10
 
 # Build backend and generate Prisma client
 WORKDIR /app/laundry-api
 RUN npx prisma generate
 RUN npm run build
+
+# Verify both builds exist
+RUN echo "=== Build Verification ===" && \
+    echo "Frontend files in /app/dist:" && \
+    ls -la /app/dist/ && \
+    echo "Backend files in /app/laundry-api/dist:" && \
+    ls -la /app/laundry-api/dist/
 
 # Create non-root user
 RUN addgroup -g 1001 -S nodejs && \
