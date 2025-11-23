@@ -84,9 +84,19 @@ app.get('/api/health', (req, res) => {
 
 // Serve static frontend files in production
 if (process.env.NODE_ENV === 'production') {
-  // In Docker container: backend is in /app/laundry-api/dist/, frontend is in /app/dist/
-  const frontendPath = path.join(__dirname, '../../../dist');
+  // Use absolute path to frontend build directory in Docker container
+  const frontendPath = '/app/dist';
   console.log(`📁 Serving frontend from: ${frontendPath}`);
+  
+  // Check if frontend directory exists
+  const fs = require('fs');
+  if (!fs.existsSync(frontendPath)) {
+    console.error(`❌ Frontend directory not found: ${frontendPath}`);
+    console.log(`📂 Current directory: ${process.cwd()}`);
+    console.log(`📂 __dirname: ${__dirname}`);
+  } else {
+    console.log(`✅ Frontend directory exists: ${frontendPath}`);
+  }
   
   app.use(express.static(frontendPath, {
     maxAge: '1d',
@@ -104,7 +114,9 @@ if (process.env.NODE_ENV === 'production') {
       });
     }
     
-    res.sendFile(path.join(frontendPath, 'index.html'));
+    const indexPath = path.join(frontendPath, 'index.html');
+    console.log(`📄 Serving index.html from: ${indexPath}`);
+    res.sendFile(indexPath);
   });
 } else {
   // Development mode - just show API info
