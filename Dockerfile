@@ -1,3 +1,5 @@
+# LaundryOS Unified Frontend+Backend Dockerfile
+# Cache bust: 2025-11-23-v3
 FROM node:20-alpine
 
 WORKDIR /app
