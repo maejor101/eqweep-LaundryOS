@@ -84,7 +84,8 @@ app.get('/api/health', (req, res) => {
 
 // Serve static frontend files in production
 if (process.env.NODE_ENV === 'production') {
-  const frontendPath = path.join(__dirname, '../../dist');
+  // In Docker container: backend is in /app/laundry-api/dist/, frontend is in /app/dist/
+  const frontendPath = path.join(__dirname, '../../../dist');
   console.log(`📁 Serving frontend from: ${frontendPath}`);
   
   app.use(express.static(frontendPath, {
