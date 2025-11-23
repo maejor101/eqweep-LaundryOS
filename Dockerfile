@@ -1,7 +1,7 @@
-# LaundryOS Unified Frontend+Backend Dockerfile
-# Cache bust: 2025-11-23-v3
-FROM node:20-alpine
+# LaundryOS Unified Service - Force fresh build v4
+FROM node:20-alpine AS base
 
+# Create app directory
 WORKDIR /app
 
 # Copy package files
@@ -9,38 +9,41 @@ COPY package*.json bun.lockb ./
 COPY laundry-api/package*.json ./laundry-api/
 COPY laundry-api/prisma ./laundry-api/prisma
 
-# Install all dependencies
-RUN npm install
+# Install dependencies
+RUN npm ci --prefer-offline && npm cache clean --force
 
-# Install backend dependencies
+# Install backend dependencies and generate Prisma client
 WORKDIR /app/laundry-api
-RUN npm install
+RUN npm ci --prefer-offline && npm cache clean --force
 RUN npx prisma generate
 
-# Go back to root and copy all source code
+# Copy source code
 WORKDIR /app
 COPY . .
 
-# Build frontend first and verify
-RUN npm run build && \
-    echo "=== Frontend Build Complete ===" && \
+# Build frontend with verbose output
+RUN echo "Building frontend..." && \
+    npm run build && \
+    echo "Frontend build completed!" && \
+    ls -la /app/ && \
+    echo "Contents of dist directory:" && \
     ls -la /app/dist/ && \
-    test -f /app/dist/index.html && echo "✅ Frontend index.html created successfully"
+    echo "Testing for index.html..." && \
+    test -f /app/dist/index.html && echo "✅ index.html found!" || echo "❌ index.html NOT found!"
 
 # Build backend
 WORKDIR /app/laundry-api
-RUN npm run build && \
-    echo "=== Backend Build Complete ===" && \
-    ls -la /app/laundry-api/dist/
+RUN npm run build
 
-# Go back to app root and set up for serving
+# Final working directory
 WORKDIR /app
+
+# Environment
+ENV NODE_ENV=production
+ENV PORT=3000
 
 # Expose port
 EXPOSE 3000
 
-# Set NODE_ENV for production
-ENV NODE_ENV=production
-
-# Start the unified server
+# Start command
 CMD ["node", "laundry-api/dist/server.js"]
