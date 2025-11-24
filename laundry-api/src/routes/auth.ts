@@ -62,11 +62,31 @@ router.post('/register', async (req, res) => {
   } catch (error: any) {
     console.error('Registration error:', error);
     
+    // Handle Prisma-specific errors
     if (error.code === 'P2002') {
       return res.status(409).json({ error: 'User with this email already exists' });
     }
     
-    res.status(500).json({ error: 'Internal server error during registration' });
+    // Handle Prisma table not found error
+    if (error.code === 'P2021' || error.message?.includes('table') || error.message?.includes('relation')) {
+      return res.status(503).json({ 
+        error: 'Database schema not initialized',
+        hint: 'Please run database migrations: npx prisma migrate deploy'
+      });
+    }
+    
+    // Handle general database connection errors
+    if (error.message?.includes('connect') || error.message?.includes('database')) {
+      return res.status(503).json({ 
+        error: 'Database connection failed',
+        hint: 'Please check database configuration'
+      });
+    }
+    
+    res.status(500).json({ 
+      error: 'Internal server error during registration',
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
   }
 });
 

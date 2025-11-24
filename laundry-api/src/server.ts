@@ -1,7 +1,6 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import path from 'path';
 import { PrismaClient } from '@prisma/client';
 
 // Enable API routes
@@ -47,14 +46,9 @@ app.use(cors({
     'http://localhost:8080',
     'http://localhost:8081', 
     'http://localhost:8082',
-    'http://localhost:3000',
-    process.env.FRONTEND_URL || 'http://localhost:3000',
-    // Railway production domains
-    /.*\.up\.railway\.app$/
+    process.env.FRONTEND_URL || 'http://localhost:3000'
   ],
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'Origin', 'X-Requested-With']
+  credentials: true
 }));
 
 app.use(express.json({ limit: '10mb' }));
@@ -66,89 +60,78 @@ app.use((req, res, next) => {
   next();
 });
 
+// Health check endpoint
+app.get('/', (req, res) => {
+  res.json({
+    message: 'LaundryOS API is running!',
+    version: '1.0.0',
+    environment: process.env.NODE_ENV || 'development'
+  });
+});
+
+app.get('/api/health', async (req, res) => {
+  try {
+    // Test database connection and table existence
+    await prisma.user.findFirst();
+    const dbStatus = 'connected';
+    
+    res.json({
+      status: 'OK',
+      message: 'LaundryOS API Health Check',
+      timestamp: new Date().toISOString(),
+      uptime: process.uptime(),
+      database: dbStatus
+    });
+  } catch (error) {
+    res.json({
+      status: 'WARNING',
+      message: 'API running but database issues detected',
+      timestamp: new Date().toISOString(),
+      uptime: process.uptime(),
+      database: 'error',
+      error: 'Database tables may not exist. Run migrations: npx prisma migrate deploy'
+    });
+  }
+});
+
+// Database initialization endpoint (for development/deployment)
+app.post('/api/init-db', async (req, res) => {
+  try {
+    console.log('🔄 Initializing database schema...');
+    
+    // Check if tables exist by trying to query users table
+    try {
+      await prisma.user.findFirst();
+      return res.json({
+        success: true,
+        message: 'Database already initialized',
+        tables: 'exists'
+      });
+    } catch (error) {
+      // Tables don't exist, need to run migrations
+      console.log('📝 Database tables not found, need to run migrations');
+      return res.status(503).json({
+        success: false,
+        message: 'Database schema not initialized',
+        error: 'Please run: npx prisma migrate deploy',
+        hint: 'This should be done during Railway deployment'
+      });
+    }
+  } catch (error) {
+    console.error('❌ Database initialization failed:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Database initialization failed',
+      error: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+});
+
 // API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/customers', customerRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/users', userRoutes);
-
-// Health check endpoint
-app.get('/api/health', (req, res) => {
-  res.json({
-    status: 'OK',
-    message: 'LaundryOS API Health Check',
-    timestamp: new Date().toISOString(),
-    uptime: Math.floor(process.uptime())
-  });
-});
-
-// Serve static frontend files in production
-if (process.env.NODE_ENV === 'production') {
-  // Use the copied React build files
-  const frontendPath = path.join(__dirname, '../public');
-  console.log(`📁 Serving React frontend from: ${frontendPath}`);
-  
-  const fs = require('fs');
-  if (fs.existsSync(frontendPath) && fs.existsSync(path.join(frontendPath, 'index.html'))) {
-    console.log(`✅ React frontend files found at: ${frontendPath}`);
-    
-    app.use(express.static(frontendPath, {
-      maxAge: '1d',
-      etag: false
-    }));
-    
-    // Catch all handler for React Router SPA routing
-    app.get('*', (req, res) => {
-      // Don't serve index.html for API routes
-      if (req.path.startsWith('/api/')) {
-        return res.status(404).json({ 
-          error: 'API endpoint not found',
-          path: req.path,
-          method: req.method
-        });
-      }
-      
-      const indexPath = path.join(frontendPath, 'index.html');
-      console.log(`📄 Serving React app from: ${indexPath}`);
-      res.sendFile(indexPath);
-    });
-  } else {
-    console.log(`❌ React frontend not found at: ${frontendPath}, using fallback`);
-    app.get('/', (req, res) => {
-      res.send(`
-        <!DOCTYPE html>
-        <html>
-        <head><title>LaundryOS - Building Frontend...</title></head>
-        <body>
-          <h1>🧺 LaundryOS</h1>
-          <p>⚠️ React frontend is building... Please wait.</p>
-          <p><a href="/api/health">API Health Check</a></p>
-          <script>setTimeout(() => location.reload(), 10000);</script>
-        </body>
-        </html>
-      `);
-    });
-  }
-} else {
-  // Development mode - just show API info
-  app.get('/', (req, res) => {
-    res.json({
-      message: 'LaundryOS API is running!',
-      version: '1.0.0',
-      environment: process.env.NODE_ENV || 'development',
-      frontend: 'Run separately in development'
-    });
-  });
-}
-
-// 404 handler for API routes only
-app.use('/api/*', (req, res) => {
-  res.status(404).json({
-    error: 'API endpoint not found',
-    path: req.path,
-    method: req.method
-  });
-});
 
 // Error handling middleware
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
@@ -157,6 +140,11 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
     error: err.message || 'Internal server error',
     ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
   });
+});
+
+// 404 handler
+app.use('*', (req, res) => {
+  res.status(404).json({ error: 'Route not found' });
 });
 
 // Start server
