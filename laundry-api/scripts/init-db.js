@@ -11,9 +11,9 @@ async function initializeDatabase() {
     console.log('📦 Generating Prisma client...');
     execSync('npx prisma generate', { stdio: 'inherit' });
     
-    // Then try to run migrations
-    console.log('🗄️ Running database migrations...');
-    execSync('npx prisma migrate deploy', { stdio: 'inherit' });
+    // Then try to push database schema (creates tables directly)
+    console.log('🗄️ Pushing database schema...');
+    execSync('npx prisma db push --accept-data-loss', { stdio: 'inherit' });
     
     // Test database connection
     console.log('🔍 Testing database connection...');

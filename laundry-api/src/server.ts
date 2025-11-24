@@ -38,11 +38,11 @@ async function connectDatabase() {
     } catch (schemaError) {
       console.log('⚠️ Database schema may not exist, attempting migration...');
       
-      // Try to run migrations automatically
+      // Try to push database schema automatically
       try {
         const { execSync } = require('child_process');
-        execSync('npx prisma migrate deploy', { stdio: 'inherit' });
-        console.log('✅ Database migrations completed');
+        execSync('npx prisma db push --accept-data-loss', { stdio: 'inherit' });
+        console.log('✅ Database schema push completed');
         
         // Test again
         await prisma.user.findFirst();
@@ -129,12 +129,12 @@ app.post('/api/init-db', async (req, res) => {
       console.log('⚠️ Prisma generate failed:', error instanceof Error ? error.message : 'Unknown error');
     }
     
-    // Try to run migrations
+    // Try to push database schema
     try {
       const { execSync } = require('child_process');
-      console.log('🗄️ Running database migrations...');
-      execSync('npx prisma migrate deploy', { stdio: 'inherit' });
-      console.log('✅ Migrations completed successfully');
+      console.log('🗄️ Pushing database schema...');
+      execSync('npx prisma db push --accept-data-loss', { stdio: 'inherit' });
+      console.log('✅ Schema push completed successfully');
     } catch (error) {
       console.log('❌ Migration command failed:', error instanceof Error ? error.message : 'Unknown error');
       return res.status(500).json({
