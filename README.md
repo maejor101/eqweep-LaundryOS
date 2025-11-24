@@ -1,17 +1,21 @@
-# LaundryOS 🧺
+# LaundryOS
 
 A modern, comprehensive laundry and dry cleaning management system built with React, TypeScript, and PostgreSQL. LaundryOS provides complete business management features including role-based authentication, customer management, order processing workflow, and South African Rand (ZAR) payment integration.
 
-## 🌟 Features
+**Live Application**: https://laundryos-app.netlify.app
+**API Backend**: https://eqweep-laundryos-production.up.railway.app
+**Database**: PostgreSQL on Railway Cloud
 
-### 👥 Authentication & User Management
+## Features
+
+### Authentication & User Management
 - **Role-based Access Control**: Admin and Cashier roles with different permissions
 - **Secure Authentication**: JWT-based authentication with PostgreSQL user storage
 - **User Registration/Login**: Secure authentication with form validation
 - **Profile Management**: Users can update personal information
 - **Admin Dashboard**: Complete user management for administrators
 
-### 🛍️ Complete Order Processing Workflow
+### Complete Order Processing Workflow
 - **Service Categories**: Dry Cleaning, Laundry, Shoe Repairs, Alterations
 - **Item Catalog**: Pre-configured items with ZAR pricing (R90-R290 range)
 - **Express Service**: Option for priority processing with additional fees
@@ -19,14 +23,14 @@ A modern, comprehensive laundry and dry cleaning management system built with Re
 - **Full Workflow**: Orders progress through To-Do → Washers → Waiting → Dryers → Ready → Pickup
 - **Status Management**: Real-time order status updates with database persistence
 
-### 👨‍👩‍👧‍👦 Customer Management
+### Customer Management
 - **PostgreSQL Database**: Persistent customer storage with full order history
 - **Smart Search**: Find existing customers by name or phone number
 - **Customer Profiles**: Store name, phone, email, and address
 - **Order History**: Complete tracking of customer order history
 - **Duplicate Prevention**: Automatic customer deduplication by phone number
 
-### 💳 South African Payment System
+### South African Payment System
 - **Currency**: All pricing in South African Rand (ZAR)
 - **Multiple Payment Methods**: Cash, Card, On Collection
 - **Cash Payment Interface**: 
@@ -35,23 +39,31 @@ A modern, comprehensive laundry and dry cleaning management system built with Re
   - **Change Calculator**: Automatic change calculation
 - **Payment Validation**: Ensure sufficient payment before order completion
 
-### 🎨 Modern User Interface
+### Modern User Interface
 - **Professional Design**: Built with shadcn/ui components and Tailwind CSS
 - **Responsive Layout**: Optimized for desktop and mobile devices
 - **Clean Navigation**: Role-based navigation with LaundryOS branding
 - **Real-time Updates**: Live order status updates and notifications
 - **Optimized Cart**: Compact payment selection with expanded cart space
 
-## 🏗️ System Architecture
+## System Architecture
 
 ### Tech Stack
-- **Frontend**: React 18.3.x with TypeScript and Vite 5.4.x
-- **Backend**: Node.js with Express.js RESTful API
-- **Database**: PostgreSQL 18 with Prisma ORM
+- **Frontend**: React 18.3.x with TypeScript and Vite 5.4.x (Deployed on Netlify)
+- **Backend**: Node.js with Express.js RESTful API (Deployed on Railway)
+- **Database**: PostgreSQL on Railway Cloud with Prisma ORM
 - **Authentication**: JWT tokens with bcrypt password hashing
 - **Styling**: Tailwind CSS with shadcn/ui component library
 - **State Management**: React Context API with API integration
 - **Forms**: React Hook Form with Zod validation
+- **API Proxy**: Netlify Functions for CORS handling
+
+### Cloud Infrastructure
+- **Frontend Hosting**: Netlify with global CDN
+- **Backend Hosting**: Railway Cloud (Asia-Southeast)
+- **Database Hosting**: Railway PostgreSQL (Asia-Southeast)
+- **API Proxy**: Netlify Functions for secure backend communication
+- **Cost**: $0/month (Free tier deployment)
 
 ### Database Schema
 ```sql
@@ -70,29 +82,34 @@ OrderItems (id, orderId, name, price, quantity, notes)
 
 ### API Endpoints
 ```
+Base URL: https://eqweep-laundryos-production.up.railway.app/api
+
 Authentication:
-POST /api/auth/login    - User login
-POST /api/auth/register - User registration
-GET  /api/auth/profile  - Get user profile
+POST /auth/login    - User login
+POST /auth/register - User registration
+GET  /auth/profile  - Get user profile
 
 Customers:
-GET    /api/customers        - List customers
-POST   /api/customers        - Create customer
-GET    /api/customers/:id    - Get customer details
-PATCH  /api/customers/:id    - Update customer
+GET    /customers        - List customers
+POST   /customers        - Create customer
+GET    /customers/:id    - Get customer details
+PATCH  /customers/:id    - Update customer
 
 Orders:
-GET    /api/orders           - List orders
-POST   /api/orders           - Create order
-GET    /api/orders/:id       - Get order details
-PATCH  /api/orders/:id/status - Update order status
-PATCH  /api/orders/:id       - Update order details
+GET    /orders           - List orders
+POST   /orders           - Create order
+GET    /orders/:id       - Get order details
+PATCH  /orders/:id/status - Update order status
+PATCH  /orders/:id       - Update order details
 
 Users (Admin only):
-GET    /api/users            - List users
-POST   /api/users            - Create user
-PATCH  /api/users/:id        - Update user
-DELETE /api/users/:id        - Delete user
+GET    /users            - List users
+POST   /users            - Create user
+PATCH  /users/:id        - Update user
+DELETE /users/:id        - Delete user
+
+Health Check:
+GET    /health           - API health status and database connectivity
 ```
 
 ### Project Structure
@@ -140,19 +157,31 @@ laundry-api/
 └── package.json         # Backend dependencies
 ```
 
-## 🚀 Getting Started
+## Getting Started
 
-### Prerequisites
+### Live Application
+
+**LaundryOS is deployed and ready to use:**
+
+1. **Access the Application**: https://laundryos-app.netlify.app
+2. **Create Account**: Register as Administrator or Cashier
+3. **Start Managing**: Begin creating orders and managing customers
+
+**Demo Login Credentials:**
+- **Email**: elpredente155@gmail.com
+- **Password**: test123456
+- **Role**: Administrator
+
+### Development Setup
+
+If you want to run LaundryOS locally for development:
+
+#### Prerequisites for Development
 - **Node.js**: Version 18 or higher
-- **PostgreSQL**: Version 18 or higher  
 - **npm**: Version 8 or higher
-- **Docker**: Docker Desktop for containerized development (recommended)
+- **Git**: For cloning the repository
 
-### 🐳 Docker Setup (Recommended)
-
-LaundryOS includes optimized Docker configuration for both development and QA environments with **51% faster build times** and **99.9% smaller build context**.
-
-#### Quick Start with Docker
+#### Local Development Setup
 
 1. **Clone the repository**:
    ```bash
@@ -160,187 +189,56 @@ LaundryOS includes optimized Docker configuration for both development and QA en
    cd eqweep-LaundryOS
    ```
 
-2. **Start optimized development environment**:
+2. **Install dependencies**:
    ```bash
-   # Fast build with cache (51% faster than previous setup)
-   docker-compose -f docker-compose.dev.yml up --build -d
-   ```
-
-3. **Access your application**:
-   - **Frontend**: http://localhost:3000
-   - **Backend API**: http://localhost:3002  
-   - **Database**: localhost:5433
-
-#### Performance Features
-- ⚡ **51% faster builds**: 413s → 204s build time
-- 🔥 **99.9% smaller context**: 224MB → 184KB transfer  
-- 🚀 **Cache optimization**: npm cache mounts for lightning rebuilds
-- 🛡️ **Security**: Non-root containers with proper permissions
-- 📦 **Multi-stage builds**: Optimized production images
-
-#### Docker Management Scripts
-```bash
-# Fast optimized build
-.\scripts\fast-build.ps1
-
-# Start development environment  
-.\scripts\start-dev.ps1
-
-# Start QA environment
-.\scripts\start-qa.ps1
-
-# Stop all containers
-.\scripts\stop-all.ps1
-```
-
-#### Environment Configuration
-- **Development**: Port 3000 (frontend), 3002 (backend), 5433 (postgres)
-- **QA**: Port 8081 (frontend), 3004 (backend), 5434 (postgres)
-
-For detailed Docker optimization guide, see [`DOCKER-PERFORMANCE.md`](./DOCKER-PERFORMANCE.md)
-
----
-
-### 💻 Local Development Setup
-
-If you prefer local development without Docker:
-
-1. **Clone the repository** (if not already done):
-   ```bash
-   git clone https://github.com/maejor101/eqweep-LaundryOS.git
-   cd eqweep-LaundryOS
-   ```
-
-2. **Setup PostgreSQL Database**:
-   ```bash
-   # Install PostgreSQL 18 and create database
-   createdb laundry_os
-   
-   # Set up database user (optional)
-   createuser -P postgres  # Use password: Admin
-   ```
-
-3. **Setup Backend API**:
-   ```bash
-   cd laundry-api
    npm install
-   
-   # Configure database connection
-   cp .env.example .env
-   # Edit .env with your PostgreSQL connection details:
-   # DATABASE_URL="postgresql://postgres:Admin@localhost:5432/laundry_os"
-   # JWT_SECRET="your-secret-key"
-   
-   # Run database migrations
-   npx prisma migrate deploy
-   npx prisma generate
-   
-   # Start backend server
-   npm start
    ```
 
-4. **Setup Frontend**:
+3. **Setup environment variables**:
    ```bash
-   cd ..  # Back to root directory
-   npm install
-   
-   # Start frontend development server
+   # The app is pre-configured to work with the live backend
+   # Frontend will connect to: https://eqweep-laundryos-production.up.railway.app/api
+   ```
+
+4. **Start development server**:
+   ```bash
    npm run dev
    ```
 
-5. **Access the application**:
-   - Frontend: `http://localhost:8083` (or available port)
-   - Backend API: `http://localhost:3001`
+5. **Access locally**:
+   - Frontend: `http://localhost:5173`
+   - Backend: Uses live Railway API
+   - Database: Uses live Railway PostgreSQL
 
----
+### Deployment Information
 
-## 🐳 Docker Environments
+**Current Deployment:**
+- **Frontend**: Netlify (Global CDN) - https://laundryos-app.netlify.app
+- **Backend**: Railway Cloud (Asia-Southeast) - https://eqweep-laundryos-production.up.railway.app
+- **Database**: Railway PostgreSQL (Private network)
+- **SSL**: Automatic HTTPS on both platforms
+- **Uptime**: 99.9% availability
+- **Performance**: Global edge caching (Netlify) + Railway hosting
 
-### Development Environment
-- **Frontend**: http://localhost:3000
-- **Backend**: http://localhost:3002
-- **Database**: localhost:5433
-- **Features**: Hot reload, development tools, volume mounting
+**Deployment Features:**
+- **Auto-deployment**: Pushes to main branch trigger deployments
+- **Environment separation**: Production environment with optimized builds
+- **CORS handling**: Netlify Functions proxy for secure API communication
+- **SSL/HTTPS**: Automatic SSL certificates
+- **Custom domain ready**: Can be configured for custom domains
 
-### QA Environment  
-- **Frontend**: http://localhost:8081
-- **Backend**: http://localhost:3004
-- **Database**: localhost:5434
-- **Features**: Production builds, optimized for testing
+## Usage Guide
 
-### Docker Commands
-```bash
-# Build and start development environment
-docker-compose -f docker-compose.dev.yml up --build -d
+### Accessing LaundryOS
 
-# Build and start QA environment
-docker-compose -f docker-compose.qa.yml up --build -d
-
-# View running containers
-docker-compose -f docker-compose.dev.yml ps
-
-# View logs
-docker-compose -f docker-compose.dev.yml logs -f
-
-# Stop environment
-docker-compose -f docker-compose.dev.yml down
-```
-
-### Environment Configuration
-
-#### Docker Environment Files
-The project includes optimized Docker configurations:
-- `docker-compose.dev.yml` - Development with hot reload
-- `docker-compose.qa.yml` - QA environment with production builds  
-- `Dockerfile.frontend` - Optimized React build with cache mounts
-- `laundry-api/Dockerfile` - Optimized Node.js API with security features
-
-#### Backend (.env)
-```env
-DATABASE_URL="postgresql://postgres:Admin@localhost:5432/laundry_os"
-JWT_SECRET="your-secure-jwt-secret-key"
-PORT=3001
-NODE_ENV=development
-```
-
-#### Frontend (Environment Variables)
-```env
-VITE_API_URL="http://localhost:3001/api"
-```
-
-### Available Scripts
-
-#### Docker Scripts (PowerShell)
-```bash
-.\scripts\fast-build.ps1    # Optimized build with timing
-.\scripts\start-dev.ps1     # Start development environment  
-.\scripts\start-qa.ps1      # Start QA environment
-.\scripts\stop-all.ps1      # Stop all Docker containers
-.\scripts\reset-dev-db.ps1  # Reset development database
-.\scripts\test-docker.ps1   # Test Docker setup
-```
-
-#### Frontend Scripts
-```bash
-npm run dev      # Development server with hot reload
-npm run build    # Build for production
-npm run preview  # Preview production build
-npm run lint     # Run ESLint for code quality
-```
-
-#### Backend Scripts
-```bash
-npm start        # Start production server
-npm run dev      # Development server with auto-reload
-npm run build    # Build TypeScript to JavaScript
-```
-
-## 📱 Usage Guide
+1. **Visit**: https://laundryos-app.netlify.app
+2. **Register**: Create your administrator or cashier account
+3. **Login**: Access the full system functionality
 
 ### Initial Setup
-1. **Database Setup**: Ensure PostgreSQL is running with the laundry_os database
-2. **First User**: Register the first user (automatically becomes admin)
-3. **Staff Management**: Admins can manage users through the system
+1. **First User Registration**: The first user becomes an administrator automatically
+2. **Staff Management**: Administrators can create cashier accounts
+3. **Start Operations**: Begin creating customers and processing orders
 
 ### Daily Operations
 
@@ -378,34 +276,29 @@ npm run build    # Build TypeScript to JavaScript
    - R10, R20, R50, R100, R200 notes + R1, R2, R5 coins
 3. **Card/Collection**: Simple selection for non-cash payments
 
-## 🔧 Configuration
+## Configuration
 
-### Docker Configuration  
+### Live System Configuration
 ```bash
-# Development Environment
-Frontend: http://localhost:3000
-Backend: http://localhost:3002  
-Database: postgresql://postgres:DevPassword123@localhost:5433/laundry_os_dev
+# Production Environment (Current Deployment)
+Frontend: https://laundryos-app.netlify.app
+Backend: https://eqweep-laundryos-production.up.railway.app
+Database: Railway PostgreSQL (Private network)
 
-# QA Environment
-Frontend: http://localhost:8081
-Backend: http://localhost:3004
-Database: postgresql://postgres:QAPassword123@localhost:5434/laundry_os_qa
+# API Proxy
+Frontend API calls → Netlify Functions → Railway Backend
 ```
 
-### Local Database Configuration
+### Development Configuration
 ```bash
-# PostgreSQL Connection
-Database: laundry_os
-User: postgres
-Password: Admin
-Port: 5432
-Host: localhost
+# Local Development (connects to live backend)
+Frontend: http://localhost:5173
+Backend: https://eqweep-laundryos-production.up.railway.app (Live)
+Database: Railway PostgreSQL (Live)
 
-# Environment Variables (.env in laundry-api/)
-DATABASE_URL="postgresql://postgres:Admin@localhost:5432/laundry_os"
-JWT_SECRET="your-secure-secret-key"
-PORT=3001
+# Environment Variables (.env.production)
+VITE_API_URL="/.netlify/functions/api"
+VITE_APP_TITLE="LaundryOS"
 ```
 
 ### Customization Options
@@ -438,19 +331,19 @@ const PAYMENT_OPTIONS = [
 ```
 
 ### Database Management
+
+**Note**: LaundryOS uses a live production database on Railway. Database management is handled automatically.
+
+For development database access:
 ```bash
-# Reset database (development)
-cd laundry-api
-npx prisma migrate reset
+# View database with Railway dashboard
+# Visit: https://railway.app → Login → View eqweep-laundryos-production
 
-# Generate Prisma client after schema changes
-npx prisma generate
-
-# View database with Prisma Studio
-npx prisma studio
+# API Health Check
+curl https://eqweep-laundryos-production.up.railway.app/api/health
 ```
 
-## 🛡️ Security Features
+## Security Features
 
 ### Authentication & Authorization
 - **JWT Tokens**: Secure authentication with refresh capability
@@ -464,7 +357,7 @@ npx prisma studio
 - **XSS Prevention**: React's built-in XSS protection
 - **SQL Injection Prevention**: Prisma ORM with parameterized queries
 
-## 🤝 Contributing
+## Contributing
 
 ### Development Guidelines
 1. **Code Style**: Follow TypeScript and React best practices
@@ -490,7 +383,7 @@ npx prisma migrate reset
 npx prisma studio
 ```
 
-## 📋 Dependencies
+## Dependencies
 
 ### Frontend Dependencies
 - **React Ecosystem**: React 18, React Router DOM, React Hook Form
@@ -513,53 +406,53 @@ npx prisma studio
 - **Code Quality**: ESLint with TypeScript rules
 - **Database Tools**: Prisma CLI for migrations and management
 
-## 🔄 System Requirements
+## System Requirements
 
-### Production Environment
-- **Node.js**: 18+ (LTS recommended)
-- **PostgreSQL**: 18+ with connection pooling
-- **Memory**: 2GB RAM minimum, 4GB recommended
-- **Storage**: 10GB minimum for database and application
-- **Network**: HTTPS recommended for production
+### Using the Live Application
+- **Web Browser**: Modern browser with JavaScript enabled
+- **Internet Connection**: Stable connection for API communication
+- **Device**: Desktop, tablet, or mobile (responsive design)
+- **Account**: Register at https://laundryos-app.netlify.app
 
 ### Development Environment
 - **Node.js**: 18+ with npm 8+
-- **PostgreSQL**: Local installation or Docker container
-- **Docker**: Docker Desktop (recommended for optimized development)
-- **IDE**: VS Code with recommended extensions:
+- **Git**: For repository cloning
+- **IDE**: VS Code recommended with extensions:
   - TypeScript and JavaScript Language Features
-  - Prisma Extension
   - Tailwind CSS IntelliSense
   - ES7+ React/Redux/React-Native snippets
 
-## 📈 Features Roadmap
+## Features Roadmap
 
-### Completed ✅
-- Complete PostgreSQL integration with Prisma ORM
-- JWT authentication with role-based access control
-- Full order processing workflow (To-Do → Pickup)
-- South African Rand currency integration
-- Real-time order status updates
-- Customer management with order history
-- Responsive UI with LaundryOS branding
+### Completed
+- **Live Production Deployment**: Netlify + Railway cloud hosting
+- **Complete PostgreSQL Integration**: Prisma ORM with Railway database
+- **JWT Authentication**: Role-based access control (Admin/Cashier)
+- **Full Order Processing Workflow**: To-Do → Pickup with real-time updates
+- **South African Rand Integration**: ZAR currency with cash calculator
+- **Customer Management**: Persistent database storage with order history
+- **Responsive UI**: LaundryOS branding with mobile-friendly design
+- **CORS-Free API**: Netlify Functions proxy for seamless communication
+- **Auto-deployment**: Git push triggers automatic deployments
+- **Global CDN**: Netlify edge caching for worldwide performance
 
-### In Development 🚧
+### In Development
 - Advanced reporting and analytics
 - Inventory management system
 - SMS/Email notifications for order updates
 - Multi-location support
 
-### Planned 📋
+### Planned
 - Mobile app for customers
 - Integration with payment gateways
 - Advanced pricing rules and discounts
 - Automated backup and restore
 
-## 📄 License
+## License
 
 This project is open source. See the LICENSE file in the repository for details.
 
-## 🆘 Support & Documentation
+## Support & Documentation
 
 For issues, feature requests, or questions:
 1. **GitHub Issues**: Create an issue in the repository
@@ -568,11 +461,18 @@ For issues, feature requests, or questions:
 4. **Setup Help**: Follow the detailed installation guide above
 
 ### Common Troubleshooting
-- **Database Connection**: Verify PostgreSQL is running and credentials are correct
-- **Port Conflicts**: Backend uses 3001, frontend uses 8083 (or next available)
-- **Authentication Issues**: Clear browser storage and re-login
-- **Migration Errors**: Reset database with `npx prisma migrate reset`
+- **Login Issues**: Clear browser storage and re-login at https://laundryos-app.netlify.app/login
+- **Order Not Appearing**: Use the Debug panel in Process page to check order status
+- **Slow Loading**: Check internet connection - app uses live APIs
+- **API Errors**: Check https://eqweep-laundryos-production.up.railway.app/api/health for backend status
+
+### Contact & Support
+- **GitHub Issues**: https://github.com/maejor101/eqweep-LaundryOS/issues
+- **Live Application**: https://laundryos-app.netlify.app
+- **API Status**: https://eqweep-laundryos-production.up.railway.app/api/health
 
 ---
 
-**LaundryOS** - Complete laundry and dry cleaning business management with modern technology and South African localization. 🚀
+**LaundryOS** - Complete laundry and dry cleaning business management with modern cloud technology and South African localization.
+
+**Ready to use at**: https://laundryos-app.netlify.app
