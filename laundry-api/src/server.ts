@@ -120,24 +120,50 @@ app.post('/api/init-db', async (req, res) => {
   try {
     console.log('🔄 Initializing database schema...');
     
-    // Check if tables exist by trying to query users table
+    // First try to generate Prisma client
     try {
-      await prisma.user.findFirst();
-      return res.json({
-        success: true,
-        message: 'Database already initialized',
-        tables: 'exists'
-      });
+      const { execSync } = require('child_process');
+      console.log('📦 Generating Prisma client...');
+      execSync('npx prisma generate', { stdio: 'inherit' });
     } catch (error) {
-      // Tables don't exist, need to run migrations
-      console.log('📝 Database tables not found, need to run migrations');
-      return res.status(503).json({
+      console.log('⚠️ Prisma generate failed:', error instanceof Error ? error.message : 'Unknown error');
+    }
+    
+    // Try to run migrations
+    try {
+      const { execSync } = require('child_process');
+      console.log('🗄️ Running database migrations...');
+      execSync('npx prisma migrate deploy', { stdio: 'inherit' });
+      console.log('✅ Migrations completed successfully');
+    } catch (error) {
+      console.log('❌ Migration command failed:', error instanceof Error ? error.message : 'Unknown error');
+      return res.status(500).json({
         success: false,
-        message: 'Database schema not initialized',
-        error: 'Please run: npx prisma migrate deploy',
-        hint: 'This should be done during Railway deployment'
+        message: 'Database migration failed',
+        error: error instanceof Error ? error.message : 'Unknown error',
+        hint: 'Manual intervention may be required'
       });
     }
+    
+    // Test database tables
+    try {
+      await prisma.user.findFirst();
+      console.log('✅ Database schema verified');
+      
+      return res.json({
+        success: true,
+        message: 'Database successfully initialized',
+        tables: 'verified'
+      });
+    } catch (error) {
+      console.log('❌ Schema verification failed:', error instanceof Error ? error.message : 'Unknown error');
+      return res.status(503).json({
+        success: false,
+        message: 'Database schema verification failed',
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+    
   } catch (error) {
     console.error('❌ Database initialization failed:', error);
     res.status(500).json({
