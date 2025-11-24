@@ -31,6 +31,27 @@ async function connectDatabase() {
     const result = await prisma.$queryRaw`SELECT 1 as test`;
     console.log('✅ Database query test successful');
     
+    // Try to access users table to ensure schema exists
+    try {
+      await prisma.user.findFirst();
+      console.log('✅ Database schema verified');
+    } catch (schemaError) {
+      console.log('⚠️ Database schema may not exist, attempting migration...');
+      
+      // Try to run migrations automatically
+      try {
+        const { execSync } = require('child_process');
+        execSync('npx prisma migrate deploy', { stdio: 'inherit' });
+        console.log('✅ Database migrations completed');
+        
+        // Test again
+        await prisma.user.findFirst();
+        console.log('✅ Database schema verified after migration');
+      } catch (migrationError) {
+        console.log('❌ Migration failed, but continuing...', migrationError instanceof Error ? migrationError.message : 'Unknown error');
+      }
+    }
+    
     return true;
   } catch (error) {
     console.error('❌ Database connection failed:', error);
