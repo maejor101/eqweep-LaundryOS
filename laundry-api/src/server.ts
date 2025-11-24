@@ -71,6 +71,7 @@ app.use(cors({
     'https://cleanhub-8t8iowr24-maejor101s-projects.vercel.app',
     'https://cleanhub-2p9o56za3-maejor101s-projects.vercel.app',
     'https://cleanhub-h5r3x9k6j-maejor101s-projects.vercel.app',
+    'https://cleanhub-3zq6eu86u-maejor101s-projects.vercel.app',
     process.env.FRONTEND_URL || 'http://localhost:3000'
   ],
   credentials: true
