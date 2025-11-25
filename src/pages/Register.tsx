@@ -210,12 +210,6 @@ const Register: React.FC = () => {
             </div>
           </CardContent>
         </Card>
-
-        <div className="text-center">
-          <p className="text-xs text-muted-foreground">
-            Demo: Use any valid email, name, and password (6+ characters)
-          </p>
-        </div>
       </div>
     </div>
   );
